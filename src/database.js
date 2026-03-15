@@ -12,7 +12,10 @@ const db = new DatabaseSync(DB_PATH);
 try {
   const stat = statSync(DB_PATH);
   console.log('📦 DB file size:', stat.size, 'bytes');
-} catch {
+  // Показываем кол-во юзеров в базе
+  const userCount = db.prepare('SELECT COUNT(*) as c FROM users').get();
+  console.log('👥 Users in DB:', userCount.c);
+} catch (e) {
   console.log('📦 DB file: newly created');
 }
 db.exec("PRAGMA journal_mode = DELETE; PRAGMA foreign_keys = ON;");
