@@ -9,6 +9,12 @@ const dbDir = dirname(DB_PATH);
 if (dbDir !== '.') mkdirSync(dbDir, { recursive: true });
 
 const db = new DatabaseSync(DB_PATH);
+try {
+  const stat = statSync(DB_PATH);
+  console.log('📦 DB file size:', stat.size, 'bytes');
+} catch {
+  console.log('📦 DB file: newly created');
+}
 db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
 
 // ─── Init tables ──────────────────────────────────────────────────────────────
