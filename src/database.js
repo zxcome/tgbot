@@ -268,8 +268,10 @@ export const getUnverifiedUsers = () =>
 export const getUserByUsername = (username) =>
   db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(username.replace('@', ''));
 
-export const deleteSite = (id) =>
+export const deleteSite = (id) => {
+  db.prepare('DELETE FROM registrations WHERE site_id = ?').run(id);
   db.prepare('DELETE FROM sites WHERE id = ?').run(id);
+};
 
 export const getReferralEarnings = () =>
   db.prepare(`
