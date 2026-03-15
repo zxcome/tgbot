@@ -270,3 +270,18 @@ export const getUserByUsername = (username) =>
 
 export const deleteSite = (id) =>
   db.prepare('DELETE FROM sites WHERE id = ?').run(id);
+
+export const getReferralEarnings = () =>
+  db.prepare(`
+    SELECT
+      u.id AS referrer_id,
+      u.username,
+      u.first_name,
+      u.referral_balance AS total_earned,
+      COUNT(r.id) AS ref_count
+    FROM users u
+    LEFT JOIN users r ON r.referrer_id = u.id
+    WHERE u.referral_balance > 0
+    GROUP BY u.id
+    ORDER BY u.referral_balance DESC
+  `).all();

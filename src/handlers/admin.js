@@ -332,7 +332,6 @@ export const handleAdminTopup = async (ctx) => {
 export const handleAdminExport = async (ctx) => {
   const { default: XLSX } = await import('xlsx');
 
-  // Get all users and all sites
   const users = db.getAllUsers();
   const sites = db.getAllSitesAdmin();
   const allRegs = db.getExportData();
@@ -342,49 +341,92 @@ export const handleAdminExport = async (ctx) => {
     return;
   }
 
-  // Build reg map: { userId_siteId: status }
+  // Map telegram_id -> user for referrer lookup
+  const userById = {};
+  for (const u of users) userById[u.id] = u;
+
+  // Build reg map: { telegramId_siteName: status }
   const regMap = {};
   for (const r of allRegs) {
     regMap[`${r.telegram_id}_${r.site_name}`] = r.status;
   }
 
-  // Status display
+  // Build referral earnings map: { referrerId: totalEarned }
+  const refEarnings = db.getReferralEarnings();
+  const refEarningsMap = {};
+  for (const r of refEarnings) {
+    refEarningsMap[r.referrer_id] = r.total_earned;
+  }
+
   const statusIcon = (status) => {
     if (status === 'approved') return '✅';
     if (status === 'pending')  return '⏳';
     if (status === 'rejected') return '❌';
-    return '';  // never interacted
+    return '';
   };
 
-  // Header row: Username | Имя | Telegram ID | Баланс | site1 | site2 | site3 ...
+  // ── Лист 1: Пользователи + сайты ──────────────────────────────────────────
   const siteNames = sites.map(s => s.name);
-  const header = ['Username', 'Имя', 'Telegram ID', 'Баланс ($)', ...siteNames];
-
-  const wsData = [header];
+  const header1 = [
+    'Username', 'Имя', 'Telegram ID', 'Баланс ($)',
+    'Кто пригласил', 'Заработано с рефералов ($)',
+    ...siteNames,
+  ];
+  const wsData1 = [header1];
 
   for (const u of users) {
+    const referrer = u.referrer_id ? userById[u.referrer_id] : null;
+    const referrerStr = referrer
+      ? (referrer.username ? `@${referrer.username}` : referrer.first_name)
+      : '—';
+
     const row = [
       u.username ? `@${u.username}` : '—',
       u.first_name || '—',
       u.telegram_id,
       u.balance,
+      referrerStr,
+      u.referral_balance,
     ];
     for (const site of sites) {
       const status = regMap[`${u.telegram_id}_${site.name}`];
       row.push(statusIcon(status));
     }
-    wsData.push(row);
+    wsData1.push(row);
   }
 
+  // ── Лист 2: Реферальная статистика ────────────────────────────────────────
+  const wsData2 = [
+    ['Реферер (username)', 'Реферер (имя)', 'Telegram ID', 'Кол-во рефералов', 'Всего заработано ($)'],
+  ];
+
+  for (const u of users) {
+    const refs = users.filter(r => r.referrer_id === u.id);
+    if (refs.length > 0) {
+      wsData2.push([
+        u.username ? `@${u.username}` : '—',
+        u.first_name || '—',
+        u.telegram_id,
+        refs.length,
+        u.referral_balance,
+      ]);
+    }
+  }
+  // Sort by earnings desc
+  const refRows = wsData2.slice(1).sort((a, b) => b[4] - a[4]);
+  const wsData2Final = [wsData2[0], ...refRows];
+
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-  // Column widths
-  const cols = [{ wch: 20 }, { wch: 18 }, { wch: 15 }, { wch: 12 }];
-  for (const _ of sites) cols.push({ wch: 16 });
-  ws['!cols'] = cols;
+  const ws1 = XLSX.utils.aoa_to_sheet(wsData1);
+  const cols1 = [{ wch: 20 }, { wch: 18 }, { wch: 14 }, { wch: 12 }, { wch: 22 }, { wch: 24 }];
+  for (const _ of sites) cols1.push({ wch: 14 });
+  ws1['!cols'] = cols1;
+  XLSX.utils.book_append_sheet(wb, ws1, 'Пользователи');
 
-  XLSX.utils.book_append_sheet(wb, ws, 'Пользователи');
+  const ws2 = XLSX.utils.aoa_to_sheet(wsData2Final);
+  ws2['!cols'] = [{ wch: 22 }, { wch: 18 }, { wch: 14 }, { wch: 18 }, { wch: 22 }];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Рефералы');
 
   const filePath = './export.xlsx';
   XLSX.writeFile(wb, filePath);
@@ -392,6 +434,6 @@ export const handleAdminExport = async (ctx) => {
   await ctx.answerCbQuery();
   await ctx.replyWithDocument(
     { source: filePath, filename: `export_${new Date().toISOString().slice(0,10)}.xlsx` },
-    { caption: `📊 Экспорт данных\nПользователей: ${users.length} | Сайтов: ${sites.length}` }
+    { caption: `📊 Экспорт данных\nПользователей: ${users.length} | Сайтов: ${sites.length}\n\n📋 Лист 1: Пользователи + регистрации\n👥 Лист 2: Реферальная статистика` }
   );
 };
