@@ -15,7 +15,7 @@ try {
 } catch {
   console.log('📦 DB file: newly created');
 }
-db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
+db.exec("PRAGMA journal_mode = DELETE; PRAGMA foreign_keys = ON;");
 
 // ─── Init tables ──────────────────────────────────────────────────────────────
 
