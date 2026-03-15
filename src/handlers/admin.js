@@ -154,21 +154,45 @@ export const handleAdminSiteDelete = async (ctx) => {
 
 // ─── Registrations ────────────────────────────────────────────────────────────
 
-export const handleAdminRegs = async (ctx) => {
-  const regs = db.getPendingRegistrations();
-  if (!regs.length) return ctx.answerCbQuery('✅ Нет регистраций на проверке', { show_alert: true });
-
-  const reg = regs[0];
-  await ctx.answerCbQuery();
-  return ctx.reply(
+const sendRegCard = async (ctx, regs, index, edit = false) => {
+  const reg = regs[index];
+  const text =
     `📝 <b>Регистрация #${reg.id}</b>\n\n` +
     `Пользователь: ${reg.first_name} (@${reg.username || '—'})\n` +
     `ID: <code>${reg.telegram_id}</code>\n` +
     `Сайт: <b>${reg.site_name}</b>\n` +
-    `Оплата: <b>$${reg.payment}</b>\n` +
-    `Ожидают: ${regs.length} шт.`,
-    { parse_mode: 'HTML', ...kbAdminReg(reg.id) }
-  );
+    `Оплата: <b>$${reg.payment}</b>`;
+
+  const kb = kbAdminReg(reg.id, index, regs.length);
+
+  if (edit) {
+    await ctx.editMessageText(text, { parse_mode: 'HTML', ...kb });
+  } else {
+    await ctx.reply(text, { parse_mode: 'HTML', ...kb });
+  }
+};
+
+export const handleAdminRegs = async (ctx) => {
+  const regs = db.getPendingRegistrations();
+  if (!regs.length) return ctx.answerCbQuery('✅ Нет регистраций на проверке', { show_alert: true });
+  await ctx.answerCbQuery();
+  await sendRegCard(ctx, regs, 0, false);
+};
+
+export const handleAdminRegNav = async (ctx, direction) => {
+  const regs = db.getPendingRegistrations();
+  if (!regs.length) return ctx.answerCbQuery('✅ Больше нет заявок', { show_alert: true });
+
+  const currentIndex = parseInt(ctx.match[1]);
+  let newIndex;
+  if (direction === 'next') {
+    newIndex = currentIndex + 1 >= regs.length ? 0 : currentIndex + 1;
+  } else {
+    newIndex = currentIndex - 1 < 0 ? regs.length - 1 : currentIndex - 1;
+  }
+
+  await ctx.answerCbQuery();
+  await sendRegCard(ctx, regs, newIndex, true);
 };
 
 export const handleRegApprove = async (ctx, bot) => {
@@ -194,8 +218,14 @@ export const handleRegApprove = async (ctx, bot) => {
     }
   }
 
-  await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
   await ctx.answerCbQuery('✅ Подтверждено!');
+  await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
+
+  // Show next pending reg if any
+  const remaining = db.getPendingRegistrations();
+  if (remaining.length) {
+    await sendRegCard(ctx, remaining, 0, false);
+  }
 
   try {
     await bot.telegram.sendMessage(
@@ -212,8 +242,14 @@ export const handleRegReject = async (ctx, bot) => {
   if (!reg || reg.status !== 'pending') return ctx.answerCbQuery('Уже обработано!', { show_alert: true });
 
   db.updateRegistrationStatus(regId, 'rejected');
-  await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
   await ctx.answerCbQuery('❌ Отклонено');
+  await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
+
+  // Show next pending reg if any
+  const remaining = db.getPendingRegistrations();
+  if (remaining.length) {
+    await sendRegCard(ctx, remaining, 0, false);
+  }
 
   try {
     await bot.telegram.sendMessage(

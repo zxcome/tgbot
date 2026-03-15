@@ -91,13 +91,17 @@ export const kbAdminSiteDetail = (siteId, isActive) =>
     [Markup.button.callback('◀️ Назад', 'admin_sites')],
   ]);
 
-export const kbAdminReg = (regId) =>
+export const kbAdminReg = (regId, index, total) =>
   Markup.inlineKeyboard([
     [
       Markup.button.callback('✅ Подтвердить', `admin_reg_ok:${regId}`),
       Markup.button.callback('❌ Отклонить',   `admin_reg_no:${regId}`),
     ],
-    [Markup.button.callback('⏭ Следующая', 'admin_regs')],
+    [
+      Markup.button.callback('◀️', `admin_reg_prev:${index}`),
+      Markup.button.callback(`${index + 1} / ${total}`, 'admin_reg_noop'),
+      Markup.button.callback('▶️', `admin_reg_next:${index}`),
+    ],
   ]);
 
 export const kbAdminWithdrawal = (wdId) =>
