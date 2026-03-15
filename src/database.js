@@ -1,7 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { DB_PATH } from './config.js';
 import crypto from 'crypto';
-import { mkdirSync } from 'fs';
+import { mkdirSync, statSync } from 'fs';;
 import { dirname } from 'path';
 
 // Создаём папку если не существует
