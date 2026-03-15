@@ -13,7 +13,7 @@ bot.telegram.getMe().then(me => { botUsername = me.username; });
 
 // ─── Команды ──────────────────────────────────────────────────────────────────
 
-bot.start((ctx) => userHandlers.handleStart(ctx));
+bot.start((ctx) => userHandlers.handleStart(ctx, bot));
 
 bot.command('admin', (ctx) => {
   if (isAdmin(ctx.from.id)) return adminHandlers.handleAdminCmd(ctx);

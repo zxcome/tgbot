@@ -38,7 +38,7 @@ const getSitesMap = (userDbId) => {
 
 // ─── /start ───────────────────────────────────────────────────────────────────
 
-export const handleStart = async (ctx) => {
+export const handleStart = async (ctx, bot) => {
   clearSession(ctx.from.id);
   const payload = ctx.startPayload || '';
   const telegramId = ctx.from.id;
@@ -71,6 +71,22 @@ export const handleStart = async (ctx) => {
     db.createUser(telegramId, ctx.from.username, ctx.from.first_name, referrerDbId);
     if (payload && !payload.startsWith('ref_')) db.deactivateInviteCode(payload);
     user = db.getUser(telegramId);
+
+    // Уведомить реферера
+    if (referrerDbId) {
+      const referrer = db.getUserByDbId(referrerDbId);
+      if (referrer) {
+        try {
+          await bot.telegram.sendMessage(
+            referrer.telegram_id,
+            `👥 <b>По вашей реферальной ссылке зарегистрировался новый пользователь!</b>\n\n` +
+            `Имя: ${ctx.from.first_name}\n` +
+            `Username: @${ctx.from.username || '—'}`,
+            { parse_mode: 'HTML' }
+          );
+        } catch {}
+      }
+    }
   }
 
   if (user.is_verified) {
