@@ -1,7 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { DB_PATH } from './config.js';
 import crypto from 'crypto';
-import { mkdirSync, statSync } from 'fs';;
+import { mkdirSync, statSync } from 'fs';
 import { dirname } from 'path';
 
 // Создаём папку если не существует
@@ -9,15 +9,6 @@ const dbDir = dirname(DB_PATH);
 if (dbDir !== '.') mkdirSync(dbDir, { recursive: true });
 
 const db = new DatabaseSync(DB_PATH);
-try {
-  const stat = statSync(DB_PATH);
-  console.log('📦 DB file size:', stat.size, 'bytes');
-  // Показываем кол-во юзеров в базе
-  const userCount = db.prepare('SELECT COUNT(*) as c FROM users').get();
-  console.log('👥 Users in DB:', userCount.c);
-} catch (e) {
-  console.log('📦 DB file: newly created');
-}
 db.exec("PRAGMA journal_mode = DELETE; PRAGMA foreign_keys = ON;");
 
 // ─── Init tables ──────────────────────────────────────────────────────────────
@@ -88,7 +79,20 @@ db.exec(`
   );
 `);
 
-// Seed demo sites
+// ─── Debug ────────────────────────────────────────────────────────────────────
+
+try {
+  const stat = statSync(DB_PATH);
+  console.log('📦 DB path:', DB_PATH);
+  console.log('📦 DB file size:', stat.size, 'bytes');
+  const userCount = db.prepare('SELECT COUNT(*) as c FROM users').get();
+  console.log('👥 Users in DB:', userCount.c);
+} catch (e) {
+  console.log('📦 DB error:', e.message);
+}
+
+// ─── Seed demo sites ──────────────────────────────────────────────────────────
+
 const siteCount = db.prepare('SELECT COUNT(*) as c FROM sites').get().c;
 if (siteCount === 0) {
   db.prepare('INSERT INTO sites (name, url, payment, referral_percent) VALUES (?,?,?,?)').run('Binance', 'https://binance.com/register', 3.0, 10);
@@ -99,42 +103,42 @@ if (siteCount === 0) {
 // ─── Users ────────────────────────────────────────────────────────────────────
 
 export const getUser = (telegramId) =>
-  db.prepare('SELECT * FROM users WHERE telegram_id = ?').get(telegramId);
+    db.prepare('SELECT * FROM users WHERE telegram_id = ?').get(telegramId);
 
 export const getUserByDbId = (id) =>
-  db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+    db.prepare('SELECT * FROM users WHERE id = ?').get(id);
 
 export const createUser = (telegramId, username, firstName, referrerId = null) =>
-  db.prepare(
-    'INSERT OR IGNORE INTO users (telegram_id, username, first_name, referrer_id) VALUES (?,?,?,?)'
-  ).run(telegramId, username || '', firstName || '', referrerId);
+    db.prepare(
+        'INSERT OR IGNORE INTO users (telegram_id, username, first_name, referrer_id) VALUES (?,?,?,?)'
+    ).run(telegramId, username || '', firstName || '', referrerId);
 
 export const setVerified = (telegramId, verified) =>
-  db.prepare('UPDATE users SET is_verified = ? WHERE telegram_id = ?').run(verified ? 1 : 0, telegramId);
+    db.prepare('UPDATE users SET is_verified = ? WHERE telegram_id = ?').run(verified ? 1 : 0, telegramId);
 
 export const updateWallet = (telegramId, wallet) =>
-  db.prepare('UPDATE users SET wallet = ? WHERE telegram_id = ?').run(wallet, telegramId);
+    db.prepare('UPDATE users SET wallet = ? WHERE telegram_id = ?').run(wallet, telegramId);
 
 export const addBalance = (userDbId, amount, source = 'registration') => {
   if (source === 'referral') {
     db.prepare(
-      'UPDATE users SET balance = balance + ?, referral_balance = referral_balance + ? WHERE id = ?'
+        'UPDATE users SET balance = balance + ?, referral_balance = referral_balance + ? WHERE id = ?'
     ).run(amount, amount, userDbId);
   } else {
     db.prepare(
-      'UPDATE users SET balance = balance + ?, registration_balance = registration_balance + ? WHERE id = ?'
+        'UPDATE users SET balance = balance + ?, registration_balance = registration_balance + ? WHERE id = ?'
     ).run(amount, amount, userDbId);
   }
 };
 
 export const deductBalance = (userDbId, amount) =>
-  db.prepare('UPDATE users SET balance = balance - ? WHERE id = ?').run(amount, userDbId);
+    db.prepare('UPDATE users SET balance = balance - ? WHERE id = ?').run(amount, userDbId);
 
 export const getAllUsers = () =>
-  db.prepare('SELECT * FROM users ORDER BY created_at DESC').all();
+    db.prepare('SELECT * FROM users ORDER BY created_at DESC').all();
 
 export const getReferrals = (userDbId) =>
-  db.prepare('SELECT * FROM users WHERE referrer_id = ?').all(userDbId);
+    db.prepare('SELECT * FROM users WHERE referrer_id = ?').all(userDbId);
 
 // ─── Invite Codes ─────────────────────────────────────────────────────────────
 
@@ -147,49 +151,49 @@ export const createInviteCode = (createdBy = null) => {
 };
 
 export const validateInviteCode = (code) =>
-  db.prepare('SELECT * FROM invite_codes WHERE code = ? AND is_active = 1').get(code);
+    db.prepare('SELECT * FROM invite_codes WHERE code = ? AND is_active = 1').get(code);
 
 export const deactivateInviteCode = (code) =>
-  db.prepare('UPDATE invite_codes SET is_active = 0 WHERE code = ?').run(code);
+    db.prepare('UPDATE invite_codes SET is_active = 0 WHERE code = ?').run(code);
 
 export const getAllInviteCodes = () =>
-  db.prepare('SELECT * FROM invite_codes ORDER BY created_at DESC').all();
+    db.prepare('SELECT * FROM invite_codes ORDER BY created_at DESC').all();
 
 // ─── Sites ────────────────────────────────────────────────────────────────────
 
 export const getSites = () =>
-  db.prepare('SELECT * FROM sites WHERE is_active = 1 ORDER BY id').all();
+    db.prepare('SELECT * FROM sites WHERE is_active = 1 ORDER BY id').all();
 
 export const getSite = (id) =>
-  db.prepare('SELECT * FROM sites WHERE id = ?').get(id);
+    db.prepare('SELECT * FROM sites WHERE id = ?').get(id);
 
 export const addSite = (name, url, payment, referralPercent) =>
-  db.prepare('INSERT INTO sites (name, url, payment, referral_percent) VALUES (?,?,?,?)').run(name, url, payment, referralPercent);
+    db.prepare('INSERT INTO sites (name, url, payment, referral_percent) VALUES (?,?,?,?)').run(name, url, payment, referralPercent);
 
 export const updateSite = (id, name, url, payment, referralPercent) =>
-  db.prepare('UPDATE sites SET name=?, url=?, payment=?, referral_percent=? WHERE id=?').run(name, url, payment, referralPercent, id);
+    db.prepare('UPDATE sites SET name=?, url=?, payment=?, referral_percent=? WHERE id=?').run(name, url, payment, referralPercent, id);
 
 export const toggleSite = (id, isActive) =>
-  db.prepare('UPDATE sites SET is_active = ? WHERE id = ?').run(isActive ? 1 : 0, id);
+    db.prepare('UPDATE sites SET is_active = ? WHERE id = ?').run(isActive ? 1 : 0, id);
 
 export const getAllSitesAdmin = () =>
-  db.prepare('SELECT * FROM sites ORDER BY id').all();
+    db.prepare('SELECT * FROM sites ORDER BY id').all();
 
 // ─── Registrations ────────────────────────────────────────────────────────────
 
 export const getUserRegistration = (userDbId, siteId) =>
-  db.prepare('SELECT * FROM registrations WHERE user_id = ? AND site_id = ?').get(userDbId, siteId);
+    db.prepare('SELECT * FROM registrations WHERE user_id = ? AND site_id = ?').get(userDbId, siteId);
 
 export const createRegistration = (userDbId, siteId) =>
-  db.prepare('INSERT OR IGNORE INTO registrations (user_id, site_id) VALUES (?,?)').run(userDbId, siteId);
+    db.prepare('INSERT OR IGNORE INTO registrations (user_id, site_id) VALUES (?,?)').run(userDbId, siteId);
 
 export const resetRejectedRegistration = (userDbId, siteId) =>
-  db.prepare(
-    "UPDATE registrations SET status = 'pending', submitted_at = datetime('now'), reviewed_at = NULL WHERE user_id = ? AND site_id = ? AND status = 'rejected'"
-  ).run(userDbId, siteId);
+    db.prepare(
+        "UPDATE registrations SET status = 'pending', submitted_at = datetime('now'), reviewed_at = NULL WHERE user_id = ? AND site_id = ? AND status = 'rejected'"
+    ).run(userDbId, siteId);
 
 export const getExportData = () =>
-  db.prepare(`
+    db.prepare(`
     SELECT
       u.telegram_id,
       u.username,
@@ -204,12 +208,11 @@ export const getExportData = () =>
     ORDER BY u.username, s.name
   `).all();
 
-
 export const updateRegistrationStatus = (regId, status) =>
-  db.prepare("UPDATE registrations SET status = ?, reviewed_at = datetime('now') WHERE id = ?").run(status, regId);
+    db.prepare("UPDATE registrations SET status = ?, reviewed_at = datetime('now') WHERE id = ?").run(status, regId);
 
 export const getPendingRegistrations = () =>
-  db.prepare(`
+    db.prepare(`
     SELECT r.*, u.telegram_id, u.username, u.first_name,
            s.name AS site_name, s.payment
     FROM registrations r
@@ -220,7 +223,7 @@ export const getPendingRegistrations = () =>
   `).all();
 
 export const getRegistration = (regId) =>
-  db.prepare(`
+    db.prepare(`
     SELECT r.*, u.telegram_id, u.username, u.first_name, u.referrer_id,
            s.name AS site_name, s.payment, s.referral_percent
     FROM registrations r
@@ -230,7 +233,7 @@ export const getRegistration = (regId) =>
   `).get(regId);
 
 export const getUserRegistrations = (userDbId) =>
-  db.prepare(`
+    db.prepare(`
     SELECT r.*, s.name AS site_name, s.payment
     FROM registrations r
     JOIN sites s ON r.site_id = s.id
@@ -245,7 +248,7 @@ export const createWithdrawal = (userDbId, amount, wallet) => {
 };
 
 export const getPendingWithdrawals = () =>
-  db.prepare(`
+    db.prepare(`
     SELECT w.*, u.telegram_id, u.username, u.first_name, u.id AS user_db_id
     FROM withdrawals w
     JOIN users u ON w.user_id = u.id
@@ -254,7 +257,7 @@ export const getPendingWithdrawals = () =>
   `).all();
 
 export const getWithdrawal = (id) =>
-  db.prepare(`
+    db.prepare(`
     SELECT w.*, u.telegram_id, u.username, u.first_name, u.id AS user_db_id
     FROM withdrawals w
     JOIN users u ON w.user_id = u.id
@@ -262,18 +265,18 @@ export const getWithdrawal = (id) =>
   `).get(id);
 
 export const updateWithdrawalStatus = (id, status) =>
-  db.prepare("UPDATE withdrawals SET status = ?, processed_at = datetime('now') WHERE id = ?").run(status, id);
+    db.prepare("UPDATE withdrawals SET status = ?, processed_at = datetime('now') WHERE id = ?").run(status, id);
 
 // ─── Verification Photos ──────────────────────────────────────────────────────
 
 export const saveVerificationPhoto = (userDbId, fileId) =>
-  db.prepare('INSERT INTO verification_photos (user_id, file_id) VALUES (?,?)').run(userDbId, fileId);
+    db.prepare('INSERT INTO verification_photos (user_id, file_id) VALUES (?,?)').run(userDbId, fileId);
 
 export const getVerificationPhotos = (userDbId) =>
-  db.prepare('SELECT * FROM verification_photos WHERE user_id = ? ORDER BY submitted_at').all(userDbId);
+    db.prepare('SELECT * FROM verification_photos WHERE user_id = ? ORDER BY submitted_at').all(userDbId);
 
 export const getUnverifiedUsers = () =>
-  db.prepare(`
+    db.prepare(`
     SELECT DISTINCT u.*
     FROM users u
     JOIN verification_photos vp ON u.id = vp.user_id
@@ -281,13 +284,15 @@ export const getUnverifiedUsers = () =>
   `).all();
 
 export const getUserByUsername = (username) =>
-  db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(username.replace('@', ''));
+    db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(username.replace('@', ''));
 
-export const deleteSite = (id) =>
+export const deleteSite = (id) => {
+  db.prepare('DELETE FROM registrations WHERE site_id = ?').run(id);
   db.prepare('DELETE FROM sites WHERE id = ?').run(id);
+};
 
 export const getReferralEarnings = () =>
-  db.prepare(`
+    db.prepare(`
     SELECT
       u.id AS referrer_id,
       u.username,
