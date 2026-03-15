@@ -380,6 +380,9 @@ export const handleTextMessage = async (ctx, bot, botUsername) => {
   if (session.state === 'admin_topup_id')     return handleAdminTopupId(ctx);
   if (session.state === 'admin_topup_amount') return handleAdminTopupAmount(ctx, bot);
 
+  // DB set balance FSM
+  if (session.state === 'db_setbal') return handleDbSetBalInput(ctx);
+
   // Menu buttons
   switch (text) {
     case '🔐 Пройти верификацию':     return handleVerificationStart(ctx);
@@ -484,4 +487,20 @@ const handleAdminTopupAmount = async (ctx, bot) => {
       { parse_mode: 'HTML' }
     );
   } catch {}
+};
+
+// ─── DB set balance FSM ───────────────────────────────────────────────────────
+
+const handleDbSetBalInput = async (ctx) => {
+  const amount = parseFloat(ctx.message.text.replace(',', '.'));
+  if (isNaN(amount) || amount < 0) return ctx.reply('❗ Введите корректную сумму (например: 10.00)');
+
+  const session = getSession(ctx.from.id);
+  db.setBalance(session.dbUserId, amount);
+  clearSession(ctx.from.id);
+
+  return ctx.reply(
+    `✅ Баланс <b>${session.dbUserName}</b> установлен: <b>$${amount.toFixed(2)}</b>`,
+    { parse_mode: 'HTML', ...kbMainMenu() }
+  );
 };

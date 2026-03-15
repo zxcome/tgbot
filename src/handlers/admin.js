@@ -335,20 +335,31 @@ export const handleAdminCodeNew = async (ctx) => {
 
 // ─── Users List ───────────────────────────────────────────────────────────────
 
-export const handleAdminUsers = async (ctx) => {
+export const handleAdminUsers = async (ctx, page = 0) => {
+  const { Markup } = await import('telegraf');
+  const PAGE_SIZE = 20;
   const users = db.getAllUsers();
-  let text = `👥 <b>Пользователи (${users.length})</b>\n\n`;
-  for (const u of users.slice(0, 20)) {
+  const total = users.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const pageUsers = users.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  let text = `👥 <b>Пользователи (${total})</b> — страница ${page + 1}/${totalPages}\n\n`;
+  for (const u of pageUsers) {
     const v = u.is_verified ? '✅' : '⏳';
     text += `${v} ${u.first_name} (@${u.username || '—'}) — $${u.balance.toFixed(2)}\n`;
   }
-  if (users.length > 20) text += `\n...и ещё ${users.length - 20} чел.`;
 
-  const { Markup } = await import('telegraf');
-  await ctx.editMessageText(text, {
-    parse_mode: 'HTML',
-    ...Markup.inlineKeyboard([[Markup.button.callback('◀️ Назад', 'admin_back')]]),
-  });
+  const navButtons = [];
+  if (page > 0) navButtons.push(Markup.button.callback('◀️ Назад', `admin_users_page:${page - 1}`));
+  navButtons.push(Markup.button.callback(`${page + 1} / ${totalPages}`, 'admin_reg_noop'));
+  if (page + 1 < totalPages) navButtons.push(Markup.button.callback('▶️ Вперёд', `admin_users_page:${page + 1}`));
+
+  const kb = Markup.inlineKeyboard([
+    navButtons,
+    [Markup.button.callback('◀️ В меню', 'admin_back')],
+  ]);
+
+  await ctx.editMessageText(text, { parse_mode: 'HTML', ...kb });
   return ctx.answerCbQuery();
 };
 
@@ -472,4 +483,134 @@ export const handleAdminExport = async (ctx) => {
     { source: filePath, filename: `export_${new Date().toISOString().slice(0,10)}.xlsx` },
     { caption: `📊 Экспорт данных\nПользователей: ${users.length} | Сайтов: ${sites.length}\n\n📋 Лист 1: Пользователи + регистрации\n👥 Лист 2: Реферальная статистика` }
   );
+};
+
+// ─── /db command ──────────────────────────────────────────────────────────────
+
+export const handleDbCmd = async (ctx) => {
+  return showDbPage(ctx, 0, false);
+};
+
+const showDbPage = async (ctx, page, edit = true) => {
+  const { Markup } = await import('telegraf');
+  const PAGE_SIZE = 10;
+  const { users, total } = db.getUsersPage(page, PAGE_SIZE);
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  let text = `🗄 <b>База данных</b> — ${total} пользователей\n`;
+  text += `Страница ${page + 1}/${totalPages}\n\n`;
+
+  for (const u of users) {
+    const v = u.is_verified ? '✅' : '❌';
+    text += `${v} <b>${u.first_name}</b> (@${u.username || '—'}) | $${u.balance.toFixed(2)} | /dbu_${u.id}\n`;
+  }
+
+  text += `\n<i>Нажмите /dbu_ID для редактирования пользователя</i>`;
+
+  const navButtons = [];
+  if (page > 0) navButtons.push(Markup.button.callback('◀️', `db_page:${page - 1}`));
+  navButtons.push(Markup.button.callback(`${page + 1}/${totalPages}`, 'admin_reg_noop'));
+  if (page + 1 < totalPages) navButtons.push(Markup.button.callback('▶️', `db_page:${page + 1}`));
+
+  const kb = Markup.inlineKeyboard([navButtons]);
+
+  if (edit) {
+    await ctx.editMessageText(text, { parse_mode: 'HTML', ...kb });
+    return ctx.answerCbQuery();
+  } else {
+    return ctx.reply(text, { parse_mode: 'HTML', ...kb });
+  }
+};
+
+export const handleDbPage = async (ctx) => {
+  const page = parseInt(ctx.match[1]);
+  return showDbPage(ctx, page, true);
+};
+
+export const handleDbUser = async (ctx) => {
+  const { Markup } = await import('telegraf');
+  const userId = parseInt(ctx.match[1]);
+  const u = db.getUserByDbId(userId);
+  if (!u) return ctx.reply('❗ Пользователь не найден');
+
+  const regs = db.getUserRegistrations(userId);
+  const regText = regs.length
+    ? regs.map(r => {
+        const icon = r.status === 'approved' ? '✅' : r.status === 'pending' ? '⏳' : '❌';
+        return `  ${icon} ${r.site_name}`;
+      }).join('\n')
+    : '  Нет регистраций';
+
+  const text =
+    `👤 <b>Пользователь #${u.id}</b>\n\n` +
+    `Имя: <b>${u.first_name}</b>\n` +
+    `Username: @${u.username || '—'}\n` +
+    `Telegram ID: <code>${u.telegram_id}</code>\n` +
+    `Верифицирован: ${u.is_verified ? '✅ Да' : '❌ Нет'}\n` +
+    `Кошелёк: ${u.wallet || '—'}\n\n` +
+    `💰 Баланс: <b>$${u.balance.toFixed(2)}</b>\n` +
+    `📋 С регистраций: $${u.registration_balance.toFixed(2)}\n` +
+    `👥 С рефералов: $${u.referral_balance.toFixed(2)}\n\n` +
+    `📋 Регистрации:\n${regText}`;
+
+  const kb = Markup.inlineKeyboard([
+    [
+      Markup.button.callback('💰 Изменить баланс', `dbu_setbal:${u.id}`),
+      Markup.button.callback('🔄 Обнулить баланс', `dbu_zeroval:${u.id}`),
+    ],
+    [
+      Markup.button.callback(u.is_verified ? '🔒 Снять верификацию' : '✅ Верифицировать', `dbu_toggleverif:${u.id}`),
+      Markup.button.callback('🗑 Удалить юзера', `dbu_delete:${u.id}`),
+    ],
+    [Markup.button.callback('◀️ К списку', 'db_back')],
+  ]);
+
+  return ctx.reply(text, { parse_mode: 'HTML', ...kb });
+};
+
+export const handleDbSetBalance = async (ctx) => {
+  const userId = parseInt(ctx.match[1]);
+  const u = db.getUserByDbId(userId);
+  setSession(ctx.from.id, { state: 'db_setbal', dbUserId: userId, dbUserName: u.first_name });
+  await ctx.answerCbQuery();
+  return ctx.reply(
+    `💰 Введите новый баланс для <b>${u.first_name}</b>:`,
+    { parse_mode: 'HTML', ...kbCancel() }
+  );
+};
+
+export const handleDbZeroBalance = async (ctx) => {
+  const userId = parseInt(ctx.match[1]);
+  const u = db.getUserByDbId(userId);
+  db.setBalance(userId, 0);
+  await ctx.answerCbQuery('✅ Баланс обнулён!', { show_alert: true });
+  return ctx.reply(`✅ Баланс <b>${u.first_name}</b> обнулён.`, { parse_mode: 'HTML' });
+};
+
+export const handleDbToggleVerif = async (ctx) => {
+  const userId = parseInt(ctx.match[1]);
+  const u = db.getUserByDbId(userId);
+  db.setVerifiedById(userId, !u.is_verified);
+  await ctx.answerCbQuery(u.is_verified ? '🔒 Верификация снята' : '✅ Верифицирован', { show_alert: true });
+  return ctx.reply(
+    u.is_verified
+      ? `🔒 Верификация снята у <b>${u.first_name}</b>.`
+      : `✅ <b>${u.first_name}</b> верифицирован.`,
+    { parse_mode: 'HTML' }
+  );
+};
+
+export const handleDbDelete = async (ctx, bot) => {
+  const userId = parseInt(ctx.match[1]);
+  const u = db.getUserByDbId(userId);
+  db.deleteUser(userId);
+  await ctx.answerCbQuery('🗑 Удалён!', { show_alert: true });
+  await ctx.reply(`🗑 Пользователь <b>${u.first_name}</b> удалён.`, { parse_mode: 'HTML' });
+  try {
+    await bot.telegram.sendMessage(u.telegram_id, '❌ Ваш аккаунт был удалён администратором.');
+  } catch {}
+};
+
+export const handleDbBack = async (ctx) => {
+  return showDbPage(ctx, 0, true);
 };

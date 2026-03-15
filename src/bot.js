@@ -19,6 +19,14 @@ bot.command('admin', (ctx) => {
   if (isAdmin(ctx.from.id)) return adminHandlers.handleAdminCmd(ctx);
 });
 
+bot.command('db', (ctx) => {
+  if (isAdmin(ctx.from.id)) return adminHandlers.handleDbCmd(ctx);
+});
+
+bot.hears(/^\/dbu_(\d+)$/, (ctx) => {
+  if (isAdmin(ctx.from.id)) return adminHandlers.handleDbUser(ctx);
+});
+
 // ─── Текстовые сообщения (FSM роутер) ────────────────────────────────────────
 
 bot.on('text', (ctx) => userHandlers.handleTextMessage(ctx, bot, botUsername));
@@ -54,9 +62,16 @@ bot.action('admin_withdrawals',         ag((ctx) => adminHandlers.handleAdminWit
 bot.action('admin_verifs',              ag((ctx) => adminHandlers.handleAdminVerifs(ctx)));
 bot.action('admin_codes',               ag((ctx) => adminHandlers.handleAdminCodes(ctx)));
 bot.action('admin_code_new',            ag((ctx) => adminHandlers.handleAdminCodeNew(ctx)));
-bot.action('admin_users',               ag((ctx) => adminHandlers.handleAdminUsers(ctx)));
+bot.action('admin_users',               ag((ctx) => adminHandlers.handleAdminUsers(ctx, 0)));
+bot.action(/^admin_users_page:(\d+)$/,  ag((ctx) => adminHandlers.handleAdminUsers(ctx, parseInt(ctx.match[1]))));
 bot.action('admin_site_add',            ag((ctx) => adminHandlers.handleAdminSiteAdd(ctx)));
 bot.action('admin_topup',               ag((ctx) => adminHandlers.handleAdminTopup(ctx)));
+bot.action(/^db_page:(\d+)$/,           ag((ctx) => adminHandlers.handleDbPage(ctx)));
+bot.action('db_back',                    ag((ctx) => adminHandlers.handleDbBack(ctx)));
+bot.action(/^dbu_setbal:(\d+)$/,        ag((ctx) => adminHandlers.handleDbSetBalance(ctx)));
+bot.action(/^dbu_zeroval:(\d+)$/,       ag((ctx) => adminHandlers.handleDbZeroBalance(ctx)));
+bot.action(/^dbu_toggleverif:(\d+)$/,   ag((ctx) => adminHandlers.handleDbToggleVerif(ctx)));
+bot.action(/^dbu_delete:(\d+)$/,        ag((ctx) => adminHandlers.handleDbDelete(ctx, bot)));
 bot.action('admin_export',              ag((ctx) => adminHandlers.handleAdminExport(ctx)));
 bot.action(/^admin_site:(\d+)$/,        ag((ctx) => adminHandlers.handleAdminSiteDetail(ctx)));
 bot.action(/^admin_site_toggle:(\d+)$/, ag((ctx) => adminHandlers.handleAdminSiteToggle(ctx)));
