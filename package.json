@@ -1,0 +1,16 @@
+{
+  "name": "tgbot-registrations",
+  "version": "1.0.0",
+  "description": "Telegram bot for paid registrations",
+  "main": "src/bot.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/bot.js",
+    "dev": "node --watch src/bot.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "telegraf": "^4.16.3",
+    "xlsx": "^0.18.5"
+  }
+}
