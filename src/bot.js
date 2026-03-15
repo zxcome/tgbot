@@ -12,7 +12,7 @@ let botUsername = 'YourBot';
 bot.telegram.getMe().then(me => { botUsername = me.username; });
 
 // ─── Команды ──────────────────────────────────────────────────────────────────
-
+console.log('📁 DB path:', process.env.DB_PATH);
 bot.start((ctx) => userHandlers.handleStart(ctx));
 
 bot.command('admin', (ctx) => {
