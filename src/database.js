@@ -1,6 +1,12 @@
 import { DatabaseSync } from 'node:sqlite';
 import { DB_PATH } from './config.js';
 import crypto from 'crypto';
+import { mkdirSync } from 'fs';
+import { dirname } from 'path';
+
+// Создаём папку если не существует
+const dbDir = dirname(DB_PATH);
+if (dbDir !== '.') mkdirSync(dbDir, { recursive: true });
 
 const db = new DatabaseSync(DB_PATH);
 db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
