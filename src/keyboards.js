@@ -38,14 +38,14 @@ export const kbSitesList = (sites, regMap) => {
 };
 
 export const kbSiteDetail = (siteId, alreadySubmitted, siteUrl) => {
-  const buttons = [
-    [Markup.button.url('🔗 Перейти на сайт', siteUrl)],
-  ];
-  if (!alreadySubmitted) {
-    buttons.push([Markup.button.callback('✅ Готово', `done:${siteId}`)]);
-  }
-  buttons.push([Markup.button.callback('◀️ Назад', 'sites_back')]);
-  return Markup.inlineKeyboard(buttons);
+    const buttons = [
+        [Markup.button.url('📝 Пройти регистрацию', `https://t.me/${MANAGER_USERNAME.replace('@', '')}`)],
+    ];
+    if (!alreadySubmitted) {
+        buttons.push([Markup.button.callback('✅ Готово', `done:${siteId}`)]);
+    }
+    buttons.push([Markup.button.callback('◀️ Назад', 'sites_back')]);
+    return Markup.inlineKeyboard(buttons);
 };
 
 export const kbAfterDone = () =>
