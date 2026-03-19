@@ -38,14 +38,14 @@ export const kbSitesList = (sites, regMap) => {
 };
 
 export const kbSiteDetail = (siteId, alreadySubmitted, siteUrl) => {
-    const buttons = [
-        [Markup.button.url('📝 Пройти регистрацию', `https://t.me/${MANAGER_USERNAME.replace('@', '')}`)],
-    ];
-    if (!alreadySubmitted) {
-        buttons.push([Markup.button.callback('✅ Готово', `done:${siteId}`)]);
-    }
-    buttons.push([Markup.button.callback('◀️ Назад', 'sites_back')]);
-    return Markup.inlineKeyboard(buttons);
+  const buttons = [
+    [Markup.button.url('🔗 Перейти на сайт', siteUrl)],
+  ];
+  if (!alreadySubmitted) {
+    buttons.push([Markup.button.callback('✅ Готово', `done:${siteId}`)]);
+  }
+  buttons.push([Markup.button.callback('◀️ Назад', 'sites_back')]);
+  return Markup.inlineKeyboard(buttons);
 };
 
 export const kbAfterDone = () =>
@@ -61,6 +61,14 @@ export const kbWalletActions = () =>
 
 // ─── Admin Keyboards ──────────────────────────────────────────────────────────
 
+export const kbBroadcastTarget = () =>
+  Markup.inlineKeyboard([
+    [Markup.button.callback('👥 Всем пользователям',     'broadcast_all')],
+    [Markup.button.callback('✅ Только верифицированным', 'broadcast_verified')],
+    [Markup.button.callback('⏳ Только без верификации',  'broadcast_unverified')],
+    [Markup.button.callback('❌ Отмена',                  'admin_back')],
+  ]);
+
 export const kbAdminMain = () =>
   Markup.inlineKeyboard([
     [Markup.button.callback('🌐 Управление сайтами',    'admin_sites')],
@@ -70,6 +78,7 @@ export const kbAdminMain = () =>
     [Markup.button.callback('🎟 Инвайт-коды',           'admin_codes')],
     [Markup.button.callback('👥 Все пользователи',      'admin_users')],
     [Markup.button.callback('💰 Пополнить баланс юзеру','admin_topup')],
+    [Markup.button.callback('📢 Рассылка',               'admin_broadcast')],
     [Markup.button.callback('📊 Выгрузить в Excel',       'admin_export')],
   ]);
 

@@ -304,3 +304,12 @@ export const getUsersPage = (page, pageSize = 20) => {
   const users = db.prepare('SELECT * FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?').all(pageSize, page * pageSize);
   return { users, total };
 };
+
+export const getUsersForBroadcast = (target) => {
+  if (target === 'verified') {
+    return db.prepare('SELECT * FROM users WHERE is_verified = 1').all();
+  } else if (target === 'unverified') {
+    return db.prepare('SELECT * FROM users WHERE is_verified = 0').all();
+  }
+  return db.prepare('SELECT * FROM users').all();
+};

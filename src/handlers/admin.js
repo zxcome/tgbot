@@ -4,6 +4,7 @@ import {
   kbAdminMain, kbAdminSites, kbAdminSiteDetail,
   kbAdminReg, kbAdminWithdrawal, kbAdminVerif,
   kbAdminCodes, kbMainMenu, kbStartVerification, kbCancel,
+  kbBroadcastTarget,
 } from '../keyboards.js';
 import { setSession, clearSession, getSession, updateSession } from '../session.js';
 
@@ -613,4 +614,67 @@ export const handleDbDelete = async (ctx, bot) => {
 
 export const handleDbBack = async (ctx) => {
   return showDbPage(ctx, 0, true);
+};
+
+// ─── Broadcast ────────────────────────────────────────────────────────────────
+
+export const handleAdminBroadcast = async (ctx) => {
+  await ctx.answerCbQuery();
+  await ctx.reply(
+    '📢 <b>Рассылка</b>\n\nВыберите кому отправить сообщение:',
+    { parse_mode: 'HTML', ...kbBroadcastTarget() }
+  );
+};
+
+export const handleBroadcastTarget = async (ctx) => {
+  const target = ctx.match[1]; // all | verified | unverified
+  const labelMap = {
+    all:        '👥 Всем пользователям',
+    verified:   '✅ Только верифицированным',
+    unverified: '⏳ Только без верификации',
+  };
+  setSession(ctx.from.id, { state: 'broadcast_text', broadcastTarget: target });
+  await ctx.answerCbQuery();
+  return ctx.reply(
+    `📢 <b>Рассылка — ${labelMap[target]}</b>\n\nВведите текст сообщения:\n\n<i>Поддерживается <b>жирный</b>, <i>курсив</i>, ссылки</i>`,
+    { parse_mode: 'HTML', ...kbCancel() }
+  );
+};
+
+export const handleBroadcastSend = async (ctx, bot) => {
+  const session = getSession(ctx.from.id);
+  const target = session.broadcastTarget;
+  const text = ctx.message.text;
+  clearSession(ctx.from.id);
+
+  const users = db.getUsersForBroadcast(target);
+  const labelMap = {
+    all:        'всем',
+    verified:   'верифицированным',
+    unverified: 'без верификации',
+  };
+
+  await ctx.reply(
+    `📤 Отправляю рассылку ${labelMap[target]}...\nПолучателей: <b>${users.length}</b>`,
+    { parse_mode: 'HTML' }
+  );
+
+  let sent = 0;
+  let failed = 0;
+
+  for (const u of users) {
+    try {
+      await bot.telegram.sendMessage(u.telegram_id, text, { parse_mode: 'HTML' });
+      sent++;
+    } catch {
+      failed++;
+    }
+    // небольшая задержка чтобы не словить flood от Telegram
+    await new Promise(r => setTimeout(r, 50));
+  }
+
+  return ctx.reply(
+    `✅ <b>Рассылка завершена!</b>\n\n✅ Отправлено: <b>${sent}</b>\n❌ Не доставлено: <b>${failed}</b>`,
+    { parse_mode: 'HTML' }
+  );
 };

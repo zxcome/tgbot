@@ -399,6 +399,9 @@ export const handleTextMessage = async (ctx, bot, botUsername) => {
   // DB set balance FSM
   if (session.state === 'db_setbal') return handleDbSetBalInput(ctx);
 
+  // Broadcast FSM
+  if (session.state === 'broadcast_text') return handleBroadcastTextInput(ctx, bot);
+
   // Menu buttons
   switch (text) {
     case '🔐 Пройти верификацию':     return handleVerificationStart(ctx);
@@ -519,4 +522,11 @@ const handleDbSetBalInput = async (ctx) => {
     `✅ Баланс <b>${session.dbUserName}</b> установлен: <b>$${amount.toFixed(2)}</b>`,
     { parse_mode: 'HTML', ...kbMainMenu() }
   );
+};
+
+// ─── Broadcast text input (called from text router) ───────────────────────────
+
+const handleBroadcastTextInput = async (ctx, bot) => {
+  const { handleBroadcastSend } = await import('./admin.js');
+  return handleBroadcastSend(ctx, bot);
 };
