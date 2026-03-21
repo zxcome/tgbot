@@ -262,7 +262,7 @@ export const getUnverifiedUsers = () =>
     SELECT DISTINCT u.*
     FROM users u
     JOIN verification_photos vp ON u.id = vp.user_id
-    WHERE u.is_verified = 0 AND (u.verif_status IS NULL OR u.verif_status != 'rejected')
+    WHERE u.is_verified = 0 AND u.verif_status != 'rejected'
   `).all();
 
 export const setVerifRejected = (userDbId) =>
