@@ -224,8 +224,9 @@ export const handleRegApprove = async (ctx, bot) => {
 
   // Show next pending reg if any
   const remaining = db.getPendingRegistrations();
-  if (remaining.length) {
-    await sendRegCard(ctx, remaining, 0, false);
+  const nextAfterApprove = remaining.filter(r => r.id !== regId);
+  if (nextAfterApprove.length) {
+    await sendRegCard(ctx, nextAfterApprove, 0, false);
   }
 
   try {
@@ -247,9 +248,10 @@ export const handleRegReject = async (ctx, bot) => {
   await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
 
   // Show next pending reg if any
-  const remaining = db.getPendingRegistrations();
-  if (remaining.length) {
-    await sendRegCard(ctx, remaining, 0, false);
+  const remainingAfterReject = db.getPendingRegistrations();
+  const nextAfterReject = remainingAfterReject.filter(r => r.id !== regId);
+  if (nextAfterReject.length) {
+    await sendRegCard(ctx, nextAfterReject, 0, false);
   }
 
   try {
