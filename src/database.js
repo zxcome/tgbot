@@ -73,6 +73,19 @@ db.exec(`
   );
 `);
 
+// ─── Migrations ──────────────────────────────────────────────────────────────
+try { db.exec("ALTER TABLE users ADD COLUMN verif_status TEXT DEFAULT 'none'"); } catch {}
+try { db.exec("UPDATE users SET verif_status = 'none' WHERE verif_status IS NULL OR verif_status = ''"); } catch {}
+{
+  const cols = db.prepare("PRAGMA table_info(users)").all();
+  const hasCol = cols.some(c => c.name === 'verif_status');
+  if (!hasCol) {
+    db.exec("ALTER TABLE users ADD COLUMN verif_status TEXT DEFAULT 'none'");
+    db.exec("UPDATE users SET verif_status = 'none'");
+    console.log('✅ verif_status column added');
+  }
+}
+
 // Seed demo sites
 const siteCount = db.prepare('SELECT COUNT(*) as c FROM sites').get().c;
 if (siteCount === 0) {
