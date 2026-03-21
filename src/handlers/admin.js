@@ -62,6 +62,20 @@ export const handleVerifApprove = async (ctx, bot) => {
       { parse_mode: 'HTML', ...kbMainMenu() }
     );
   } catch {}
+
+  // Показать следующего
+  const nextUsersApprove = db.getUnverifiedUsers().filter(u => u.id !== userDbId);
+  if (nextUsersApprove.length) {
+    const next = nextUsersApprove[0];
+    const photos = db.getVerificationPhotos(next.id);
+    await ctx.reply(
+      `🔐 <b>Верификация пользователя</b>\n\nИмя: ${next.first_name}\nUsername: @${next.username || '—'}\nID: <code>${next.telegram_id}</code>\nФото: ${photos.length} шт.\nОжидают: ${nextUsersApprove.length} чел.`,
+      { parse_mode: 'HTML', ...kbAdminVerif(next.id) }
+    );
+    for (const photo of photos) {
+      try { await ctx.replyWithPhoto(photo.file_id); } catch {}
+    }
+  }
 };
 
 export const handleVerifReject = async (ctx, bot) => {
@@ -79,6 +93,20 @@ export const handleVerifReject = async (ctx, bot) => {
       { parse_mode: 'HTML', ...kbStartVerification() }
     );
   } catch {}
+
+  // Показать следующего
+  const nextUsersReject = db.getUnverifiedUsers().filter(u => u.id !== userDbId);
+  if (nextUsersReject.length) {
+    const next = nextUsersReject[0];
+    const photos = db.getVerificationPhotos(next.id);
+    await ctx.reply(
+      `🔐 <b>Верификация пользователя</b>\n\nИмя: ${next.first_name}\nUsername: @${next.username || '—'}\nID: <code>${next.telegram_id}</code>\nФото: ${photos.length} шт.\nОжидают: ${nextUsersReject.length} чел.`,
+      { parse_mode: 'HTML', ...kbAdminVerif(next.id) }
+    );
+    for (const photo of photos) {
+      try { await ctx.replyWithPhoto(photo.file_id); } catch {}
+    }
+  }
 };
 
 // ─── Sites ────────────────────────────────────────────────────────────────────
