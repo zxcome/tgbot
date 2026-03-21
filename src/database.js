@@ -262,8 +262,14 @@ export const getUnverifiedUsers = () =>
     SELECT DISTINCT u.*
     FROM users u
     JOIN verification_photos vp ON u.id = vp.user_id
-    WHERE u.is_verified = 0
+    WHERE u.is_verified = 0 AND (u.verif_status IS NULL OR u.verif_status != 'rejected')
   `).all();
+
+export const setVerifRejected = (userDbId) =>
+  db.prepare("UPDATE users SET verif_status = 'rejected' WHERE id = ?").run(userDbId);
+
+export const resetVerifStatus = (userDbId) =>
+  db.prepare("UPDATE users SET verif_status = 'none' WHERE id = ?").run(userDbId);
 
 export const getUserByUsername = (username) =>
   db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(username.replace('@', ''));

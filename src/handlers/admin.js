@@ -83,6 +83,7 @@ export const handleVerifReject = async (ctx, bot) => {
   const user = db.getUserByDbId(userDbId);
   if (!user) return ctx.answerCbQuery('Пользователь не найден', { show_alert: true });
 
+  db.setVerifRejected(userDbId);
   await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
   await ctx.answerCbQuery('❌ Отклонено');
 

@@ -109,6 +109,8 @@ export const handleVerificationStart = async (ctx) => {
   if (!user) return ctx.reply('Сначала напишите /start');
   if (user.is_verified) return ctx.reply('Вы уже верифицированы!', kbMainMenu());
 
+  // Сбрасываем статус отклонения чтобы снова попасть в очередь
+  db.resetVerifStatus(user.id);
   setSession(ctx.from.id, { state: 'verification', photos: [] });
   return ctx.reply(
     '📸 <b>Верификация</b>\n\nОтправьте ваши фотографии для подтверждения личности.\nМожно отправить несколько фото.\n\nКогда закончите — нажмите <b>«Я отправил(а) все фото»</b>.',
