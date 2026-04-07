@@ -5,6 +5,7 @@ import {
   kbStartVerification, kbMainMenu, kbCancel, kbVerificationDone,
   kbSitesList, kbSiteDetail, kbAfterDone, kbWalletActions,
   kbAdminVerif, kbAdminReg, kbAdminWithdrawal,
+  kbAdultList, kbAdultDetail, kbAdultAfterDone, kbAdminAdultReg,
 } from '../keyboards.js';
 import { getSession, setSession, clearSession, updateSession } from '../session.js';
 
@@ -64,8 +65,8 @@ export const handleStart = async (ctx, bot) => {
     // Админы всегда могут войти без инвайта
     if (!inviteValid && !isAdmin(ctx.from.id)) {
       return ctx.reply(
-        '🔒 <b>Доступ ограничен</b>\n\nБот доступен только по реферальной ссылке или инвайт-коду.\nОбратитесь к администратору.',
-        { parse_mode: 'HTML' }
+          '🔒 <b>Доступ ограничен</b>\n\nБот доступен только по реферальной ссылке или инвайт-коду.\nОбратитесь к администратору.',
+          { parse_mode: 'HTML' }
       );
     }
     db.createUser(telegramId, ctx.from.username, ctx.from.first_name, referrerDbId);
@@ -78,11 +79,11 @@ export const handleStart = async (ctx, bot) => {
       if (referrer) {
         try {
           await bot.telegram.sendMessage(
-            referrer.telegram_id,
-            `👥 <b>По вашей реферальной ссылке зарегистрировался новый пользователь!</b>\n\n` +
-            `Имя: ${ctx.from.first_name}\n` +
-            `Username: @${ctx.from.username || '—'}`,
-            { parse_mode: 'HTML' }
+              referrer.telegram_id,
+              `👥 <b>По вашей реферальной ссылке зарегистрировался новый пользователь!</b>\n\n` +
+              `Имя: ${ctx.from.first_name}\n` +
+              `Username: @${ctx.from.username || '—'}`,
+              { parse_mode: 'HTML' }
           );
         } catch {}
       }
@@ -91,14 +92,14 @@ export const handleStart = async (ctx, bot) => {
 
   if (user.is_verified) {
     return ctx.reply(
-      `👋 С возвращением, <b>${ctx.from.first_name}</b>!\n\nВыберите раздел в меню ниже.`,
-      { parse_mode: 'HTML', ...kbMainMenu() }
+        `👋 С возвращением, <b>${ctx.from.first_name}</b>!\n\nВыберите раздел в меню ниже.`,
+        { parse_mode: 'HTML', ...kbMainMenu() }
     );
   }
 
   return ctx.reply(
-    `👋 Привет, <b>${ctx.from.first_name}</b>!\n\nДобро пожаловать! Чтобы получить доступ к боту, необходимо пройти <b>верификацию</b>.\n\nНажмите кнопку ниже, чтобы начать.`,
-    { parse_mode: 'HTML', ...kbStartVerification() }
+      `👋 Привет, <b>${ctx.from.first_name}</b>!\n\nДобро пожаловать! Чтобы получить доступ к боту, необходимо пройти <b>верификацию</b>.\n\nНажмите кнопку ниже, чтобы начать.`,
+      { parse_mode: 'HTML', ...kbStartVerification() }
   );
 };
 
@@ -113,8 +114,8 @@ export const handleVerificationStart = async (ctx) => {
   db.resetVerifStatus(user.id);
   setSession(ctx.from.id, { state: 'verification', photos: [] });
   return ctx.reply(
-    '📸 <b>Верификация</b>\n\nОтправьте ваши фотографии для подтверждения личности.\nМожно отправить несколько фото.\n\nКогда закончите — нажмите <b>«Я отправил(а) все фото»</b>.',
-    { parse_mode: 'HTML', ...kbVerificationDone() }
+      '📸 <b>Верификация</b>\n\nОтправьте ваши фотографии для подтверждения личности.\nМожно отправить несколько фото.\n\nКогда закончите — нажмите <b>«Я отправил(а) все фото»</b>.',
+      { parse_mode: 'HTML', ...kbVerificationDone() }
   );
 };
 
@@ -143,16 +144,16 @@ export const handleVerificationDone = async (ctx, bot) => {
   const user = db.getUser(ctx.from.id);
 
   await ctx.reply(
-    '⏳ <b>Фото отправлены на проверку!</b>\n\nАдминистратор рассмотрит вашу заявку и откроет доступ к боту.\nОжидайте уведомления.',
-    { parse_mode: 'HTML', ...kbStartVerification() }
+      '⏳ <b>Фото отправлены на проверку!</b>\n\nАдминистратор рассмотрит вашу заявку и откроет доступ к боту.\nОжидайте уведомления.',
+      { parse_mode: 'HTML', ...kbStartVerification() }
   );
 
   const adminText =
-    `🔐 <b>Новая верификация</b>\n\n` +
-    `Имя: ${ctx.from.first_name}\n` +
-    `Username: @${ctx.from.username || '—'}\n` +
-    `ID: <code>${ctx.from.id}</code>\n` +
-    `Фото: ${photos.length} шт.`;
+      `🔐 <b>Новая верификация</b>\n\n` +
+      `Имя: ${ctx.from.first_name}\n` +
+      `Username: @${ctx.from.username || '—'}\n` +
+      `ID: <code>${ctx.from.id}</code>\n` +
+      `Фото: ${photos.length} шт.`;
 
   for (const adminId of ADMIN_IDS) {
     try {
@@ -168,11 +169,11 @@ export const handleBalance = async (ctx) => {
   if (!await requireVerified(ctx)) return;
   const u = db.getUser(ctx.from.id);
   return ctx.reply(
-    `💰 <b>Ваш баланс</b>\n\n` +
-    `💵 Общий баланс: <b>$${u.balance.toFixed(2)}</b>\n` +
-    `📋 Доход с регистраций: <b>$${u.registration_balance.toFixed(2)}</b>\n` +
-    `👥 Доход с рефералов: <b>$${u.referral_balance.toFixed(2)}</b>`,
-    { parse_mode: 'HTML' }
+      `💰 <b>Ваш баланс</b>\n\n` +
+      `💵 Общий баланс: <b>$${u.balance.toFixed(2)}</b>\n` +
+      `📋 Доход с регистраций: <b>$${u.registration_balance.toFixed(2)}</b>\n` +
+      `👥 Доход с рефералов: <b>$${u.referral_balance.toFixed(2)}</b>`,
+      { parse_mode: 'HTML' }
   );
 };
 
@@ -184,12 +185,12 @@ export const handleReferral = async (ctx, botUsername) => {
   const link = `https://t.me/${botUsername}?start=ref_${ctx.from.id}`;
   const refs = db.getReferrals(u.id);
   return ctx.reply(
-    `👥 <b>Реферальная программа</b>\n\n` +
-    `Приглашайте друзей и получайте % от их подтверждённых регистраций.\n\n` +
-    `🔗 Ваша ссылка:\n<code>${link}</code>\n\n` +
-    `👤 Рефералов: <b>${refs.length}</b>\n` +
-    `💰 Заработано с рефералов: <b>$${u.referral_balance.toFixed(2)}</b>`,
-    { parse_mode: 'HTML' }
+      `👥 <b>Реферальная программа</b>\n\n` +
+      `Приглашайте друзей и получайте % от их подтверждённых регистраций.\n\n` +
+      `🔗 Ваша ссылка:\n<code>${link}</code>\n\n` +
+      `👤 Рефералов: <b>${refs.length}</b>\n` +
+      `💰 Заработано с рефералов: <b>$${u.referral_balance.toFixed(2)}</b>`,
+      { parse_mode: 'HTML' }
   );
 };
 
@@ -214,14 +215,14 @@ export const handleWallet = async (ctx) => {
   const u = db.getUser(ctx.from.id);
   if (u.wallet) {
     return ctx.reply(
-      `💳 <b>Ваш кошелек</b>\n\n<code>${u.wallet}</code>`,
-      { parse_mode: 'HTML', ...kbWalletActions() }
+        `💳 <b>Ваш кошелек</b>\n\n<code>${u.wallet}</code>`,
+        { parse_mode: 'HTML', ...kbWalletActions() }
     );
   }
   setSession(ctx.from.id, { state: 'wallet' });
   return ctx.reply(
-    '💳 <b>Кошелек не привязан</b>\n\nВведите адрес USDT-кошелька (TRC20):',
-    { parse_mode: 'HTML', ...kbCancel() }
+      '💳 <b>Кошелек не привязан</b>\n\nВведите адрес USDT-кошелька (TRC20):',
+      { parse_mode: 'HTML', ...kbCancel() }
   );
 };
 
@@ -237,8 +238,8 @@ export const handleWalletInput = async (ctx) => {
   db.updateWallet(ctx.from.id, addr);
   clearSession(ctx.from.id);
   return ctx.reply(
-    `✅ Кошелек сохранён:\n<code>${addr}</code>`,
-    { parse_mode: 'HTML', ...kbMainMenu() }
+      `✅ Кошелек сохранён:\n<code>${addr}</code>`,
+      { parse_mode: 'HTML', ...kbMainMenu() }
   );
 };
 
@@ -252,11 +253,11 @@ export const handleWithdrawal = async (ctx) => {
 
   setSession(ctx.from.id, { state: 'withdrawal' });
   return ctx.reply(
-    `💸 <b>Вывод средств</b>\n\n` +
-    `Ваш баланс: <b>$${u.balance.toFixed(2)}</b>\n` +
-    `Кошелек: <code>${u.wallet}</code>\n\n` +
-    `Введите сумму для вывода:`,
-    { parse_mode: 'HTML', ...kbCancel() }
+      `💸 <b>Вывод средств</b>\n\n` +
+      `Ваш баланс: <b>$${u.balance.toFixed(2)}</b>\n` +
+      `Кошелек: <code>${u.wallet}</code>\n\n` +
+      `Введите сумму для вывода:`,
+      { parse_mode: 'HTML', ...kbCancel() }
   );
 };
 
@@ -272,15 +273,15 @@ export const handleWithdrawalAmount = async (ctx, bot) => {
   clearSession(ctx.from.id);
 
   await ctx.reply(
-    `✅ Заявка на вывод <b>$${amount.toFixed(2)}</b> отправлена!\nОжидайте подтверждения от администратора.`,
-    { parse_mode: 'HTML', ...kbMainMenu() }
+      `✅ Заявка на вывод <b>$${amount.toFixed(2)}</b> отправлена!\nОжидайте подтверждения от администратора.`,
+      { parse_mode: 'HTML', ...kbMainMenu() }
   );
 
   const adminText =
-    `💸 <b>Новая заявка на вывод #${wdId}</b>\n\n` +
-    `Пользователь: ${u.first_name} (@${u.username || '—'})\n` +
-    `Сумма: <b>$${amount.toFixed(2)}</b>\n` +
-    `Кошелек: <code>${u.wallet}</code>`;
+      `💸 <b>Новая заявка на вывод #${wdId}</b>\n\n` +
+      `Пользователь: ${u.first_name} (@${u.username || '—'})\n` +
+      `Сумма: <b>$${amount.toFixed(2)}</b>\n` +
+      `Кошелек: <code>${u.wallet}</code>`;
   await notifyAdmins(bot, adminText, kbAdminWithdrawal(wdId));
 };
 
@@ -293,8 +294,8 @@ export const handleSites = async (ctx) => {
   if (!sites.length) return ctx.reply('Список сайтов пока пуст.');
   const regMap = getSitesMap(user.id);
   return ctx.reply(
-    '📋 <b>Сайты для регистрации</b>\n\nВыберите сайт:',
-    { parse_mode: 'HTML', ...kbSitesList(sites, regMap) }
+      '📋 <b>Сайты для регистрации</b>\n\nВыберите сайт:',
+      { parse_mode: 'HTML', ...kbSitesList(sites, regMap) }
   );
 };
 
@@ -303,8 +304,8 @@ export const handleSitesBack = async (ctx) => {
   const sites = db.getSites();
   const regMap = getSitesMap(user.id);
   await ctx.editMessageText(
-    '📋 <b>Сайты для регистрации</b>\n\nВыберите сайт:',
-    { parse_mode: 'HTML', ...kbSitesList(sites, regMap) }
+      '📋 <b>Сайты для регистрации</b>\n\nВыберите сайт:',
+      { parse_mode: 'HTML', ...kbSitesList(sites, regMap) }
   );
   return ctx.answerCbQuery();
 };
@@ -318,15 +319,15 @@ export const handleSiteDetail = async (ctx) => {
   const reg = db.getUserRegistration(user.id, siteId);
 
   const statusText =
-    reg?.status === 'pending'  ? '\n\n⏳ <b>Статус:</b> На проверке' :
-    reg?.status === 'approved' ? '\n\n✅ <b>Статус:</b> Подтверждено' :
-    reg?.status === 'rejected' ? '\n\n❌ <b>Статус:</b> Отклонено' : '';
+      reg?.status === 'pending'  ? '\n\n⏳ <b>Статус:</b> На проверке' :
+          reg?.status === 'approved' ? '\n\n✅ <b>Статус:</b> Подтверждено' :
+              reg?.status === 'rejected' ? '\n\n❌ <b>Статус:</b> Отклонено' : '';
 
   const alreadySubmitted = reg && ['pending', 'approved'].includes(reg.status);
 
   await ctx.editMessageText(
-    `🌐 <b>${site.name}</b>\n💰 Оплата: <b>$${site.payment}</b>\n🔗 Ссылка: ${site.url}${statusText}`,
-    { parse_mode: 'HTML', ...kbSiteDetail(siteId, alreadySubmitted, site.url) }
+      `🌐 <b>${site.name}</b>\n💰 Оплата: <b>$${site.payment}</b>\n🔗 Ссылка: ${site.url}${statusText}`,
+      { parse_mode: 'HTML', ...kbSiteDetail(siteId, alreadySubmitted, site.url) }
   );
   return ctx.answerCbQuery();
 };
@@ -352,20 +353,105 @@ export const handleSiteDone = async (ctx, bot) => {
   const reg = db.getUserRegistration(user.id, siteId);
 
   await ctx.editMessageText(
-    `⏳ <b>Регистрация отправлена на проверку</b>\n\n` +
-    `Сайт: <b>${site.name}</b>\nОплата: <b>$${site.payment}</b>\n\n` +
-    `Администратор проверит вашу регистрацию и начислит оплату.`,
-    { parse_mode: 'HTML', ...kbAfterDone() }
+      `⏳ <b>Регистрация отправлена на проверку</b>\n\n` +
+      `Сайт: <b>${site.name}</b>\nОплата: <b>$${site.payment}</b>\n\n` +
+      `Администратор проверит вашу регистрацию и начислит оплату.`,
+      { parse_mode: 'HTML', ...kbAfterDone() }
   );
   await ctx.answerCbQuery('✅ Заявка отправлена на проверку!', { show_alert: true });
 
   const adminText =
-    `📝 <b>Новая регистрация #${reg.id}</b>\n\n` +
-    `Пользователь: ${user.first_name} (@${user.username || '—'})\n` +
-    `ID: <code>${ctx.from.id}</code>\n` +
-    `Сайт: <b>${site.name}</b>\n` +
-    `Оплата: <b>$${site.payment}</b>`;
+      `📝 <b>Новая регистрация #${reg.id}</b>\n\n` +
+      `Пользователь: ${user.first_name} (@${user.username || '—'})\n` +
+      `ID: <code>${ctx.from.id}</code>\n` +
+      `Сайт: <b>${site.name}</b>\n` +
+      `Оплата: <b>$${site.payment}</b>`;
   await notifyAdmins(bot, adminText, kbAdminReg(reg.id));
+};
+
+// ─── Adult Sites ──────────────────────────────────────────────────────────────
+
+const getAdultMap = (userDbId) => {
+  const regs = db.getUserAdultRegistrations(userDbId);
+  return Object.fromEntries(regs.map(r => [r.site_id, r.status]));
+};
+
+export const handleAdult = async (ctx) => {
+  if (!await requireVerified(ctx)) return;
+  const user = db.getUser(ctx.from.id);
+  const sites = db.getAdultSites();
+  if (!sites.length) return ctx.reply('Список адалт-сайтов пока пуст.');
+  const regMap = getAdultMap(user.id);
+  return ctx.reply(
+      '🔞 <b>Адалт — сайты для регистрации</b>\n\nВыберите сайт:',
+      { parse_mode: 'HTML', ...kbAdultList(sites, regMap) }
+  );
+};
+
+export const handleAdultBack = async (ctx) => {
+  const user = db.getUser(ctx.from.id);
+  const sites = db.getAdultSites();
+  const regMap = getAdultMap(user.id);
+  await ctx.editMessageText(
+      '🔞 <b>Адалт — сайты для регистрации</b>\n\nВыберите сайт:',
+      { parse_mode: 'HTML', ...kbAdultList(sites, regMap) }
+  );
+  return ctx.answerCbQuery();
+};
+
+export const handleAdultSiteDetail = async (ctx) => {
+  const siteId = parseInt(ctx.match[1]);
+  const site = db.getAdultSite(siteId);
+  if (!site) return ctx.answerCbQuery('Сайт не найден', { show_alert: true });
+
+  const user = db.getUser(ctx.from.id);
+  const reg = db.getUserAdultRegistration(user.id, siteId);
+
+  const statusText =
+      reg?.status === 'pending'  ? '\n\n⏳ <b>Статус:</b> На проверке' :
+          reg?.status === 'approved' ? '\n\n✅ <b>Статус:</b> Подтверждено' :
+              reg?.status === 'rejected' ? '\n\n❌ <b>Статус:</b> Отклонено' : '';
+
+  const alreadySubmitted = reg && ['pending', 'approved'].includes(reg.status);
+
+  await ctx.editMessageText(
+      `🔞 <b>${site.name}</b>\n🔗 Ссылка: ${site.url}${statusText}`,
+      { parse_mode: 'HTML', ...kbAdultDetail(siteId, alreadySubmitted, site.url) }
+  );
+  return ctx.answerCbQuery();
+};
+
+export const handleAdultDone = async (ctx, bot) => {
+  const siteId = parseInt(ctx.match[1]);
+  const user = db.getUser(ctx.from.id);
+  const site = db.getAdultSite(siteId);
+
+  const existing = db.getUserAdultRegistration(user.id, siteId);
+
+  if (existing) {
+    if (existing.status === 'rejected') {
+      db.resetRejectedAdultRegistration(user.id, siteId);
+    } else if (existing.status === 'pending' || existing.status === 'approved') {
+      return ctx.answerCbQuery('Вы уже отправили заявку по этому сайту!', { show_alert: true });
+    }
+  } else {
+    db.createAdultRegistration(user.id, siteId);
+  }
+
+  const reg = db.getUserAdultRegistration(user.id, siteId);
+
+  await ctx.editMessageText(
+      `⏳ <b>Заявка отправлена на проверку</b>\n\nСайт: <b>${site.name}</b>\n\nАдминистратор рассмотрит вашу заявку.`,
+      { parse_mode: 'HTML', ...kbAdultAfterDone() }
+  );
+  await ctx.answerCbQuery('✅ Заявка отправлена!', { show_alert: true });
+
+  const adminText =
+      `🔞 <b>Новая адалт-заявка #${reg.id}</b>\n\n` +
+      `Пользователь: ${user.first_name} (@${user.username || '—'})\n` +
+      `ID: <code>${ctx.from.id}</code>\n` +
+      `Сайт: <b>${site.name}</b>`;
+  await notifyAdmins(bot, adminText, kbAdminAdultReg(reg.id, 0, 1));
 };
 
 // ─── Universal text router ────────────────────────────────────────────────────
@@ -394,6 +480,10 @@ export const handleTextMessage = async (ctx, bot, botUsername) => {
   if (session.state === 'admin_site_pay')  return handleAdminSitePay(ctx);
   if (session.state === 'admin_site_ref')  return handleAdminSiteRef(ctx);
 
+  // Admin adult site FSM
+  if (session.state === 'admin_adult_site_name') return handleAdminAdultSiteName(ctx);
+  if (session.state === 'admin_adult_site_url')  return handleAdminAdultSiteUrl(ctx);
+
   // Admin top-up FSM
   if (session.state === 'admin_topup_id')     return handleAdminTopupId(ctx);
   if (session.state === 'admin_topup_amount') return handleAdminTopupAmount(ctx, bot);
@@ -408,6 +498,7 @@ export const handleTextMessage = async (ctx, bot, botUsername) => {
   switch (text) {
     case '🔐 Пройти верификацию':     return handleVerificationStart(ctx);
     case '📋 Сайты для регистрации':  return handleSites(ctx);
+    case '🔞 Адалт':                  return handleAdult(ctx);
     case '💰 Баланс':                 return handleBalance(ctx);
     case '👥 Реферальная программа':  return handleReferral(ctx, botUsername);
     case '💳 Кошелек':                return handleWallet(ctx);
@@ -449,8 +540,8 @@ const handleAdminSiteRef = async (ctx) => {
     db.addSite(session.name, session.url, session.payment, refPercent);
     clearSession(ctx.from.id);
     return ctx.reply(
-      `✅ Сайт <b>${session.name}</b> добавлен!\nОплата: $${session.payment} | Реф: ${refPercent}%`,
-      { parse_mode: 'HTML' }
+        `✅ Сайт <b>${session.name}</b> добавлен!\nОплата: $${session.payment} | Реф: ${refPercent}%`,
+        { parse_mode: 'HTML' }
     );
   }
 };
@@ -470,7 +561,7 @@ const handleAdminTopupId = async (ctx) => {
   }
 
   if (!user) return ctx.reply(
-    '❗ Пользователь не найден.\n\nПроверьте @username или ID — пользователь должен был хотя бы раз написать боту.'
+      '❗ Пользователь не найден.\n\nПроверьте @username или ID — пользователь должен был хотя бы раз написать боту.'
   );
 
   updateSession(ctx.from.id, {
@@ -480,11 +571,11 @@ const handleAdminTopupId = async (ctx) => {
     topupTgId: user.telegram_id,
   });
   return ctx.reply(
-    `👤 Пользователь: <b>${user.first_name}</b> (@${user.username || '—'})\n` +
-    `ID: <code>${user.telegram_id}</code>\n` +
-    `Текущий баланс: <b>$${user.balance.toFixed(2)}</b>\n\n` +
-    `Введите сумму пополнения:`,
-    { parse_mode: 'HTML' }
+      `👤 Пользователь: <b>${user.first_name}</b> (@${user.username || '—'})\n` +
+      `ID: <code>${user.telegram_id}</code>\n` +
+      `Текущий баланс: <b>$${user.balance.toFixed(2)}</b>\n\n` +
+      `Введите сумму пополнения:`,
+      { parse_mode: 'HTML' }
   );
 };
 
@@ -497,15 +588,15 @@ const handleAdminTopupAmount = async (ctx, bot) => {
   clearSession(ctx.from.id);
 
   await ctx.reply(
-    `✅ Баланс пользователя <b>${session.topupUserName}</b> пополнен на <b>$${amount.toFixed(2)}</b>`,
-    { parse_mode: 'HTML' }
+      `✅ Баланс пользователя <b>${session.topupUserName}</b> пополнен на <b>$${amount.toFixed(2)}</b>`,
+      { parse_mode: 'HTML' }
   );
 
   try {
     await bot.telegram.sendMessage(
-      session.topupTgId,
-      `💰 <b>Баланс пополнен!</b>\n\nНа ваш счёт зачислено: <b>$${amount.toFixed(2)}</b>`,
-      { parse_mode: 'HTML' }
+        session.topupTgId,
+        `💰 <b>Баланс пополнен!</b>\n\nНа ваш счёт зачислено: <b>$${amount.toFixed(2)}</b>`,
+        { parse_mode: 'HTML' }
     );
   } catch {}
 };
@@ -521,8 +612,8 @@ const handleDbSetBalInput = async (ctx) => {
   clearSession(ctx.from.id);
 
   return ctx.reply(
-    `✅ Баланс <b>${session.dbUserName}</b> установлен: <b>$${amount.toFixed(2)}</b>`,
-    { parse_mode: 'HTML', ...kbMainMenu() }
+      `✅ Баланс <b>${session.dbUserName}</b> установлен: <b>$${amount.toFixed(2)}</b>`,
+      { parse_mode: 'HTML', ...kbMainMenu() }
   );
 };
 
@@ -531,4 +622,26 @@ const handleDbSetBalInput = async (ctx) => {
 const handleBroadcastTextInput = async (ctx, bot) => {
   const { handleBroadcastSend } = await import('./admin.js');
   return handleBroadcastSend(ctx, bot);
+};
+
+// ─── Admin adult site FSM ─────────────────────────────────────────────────────
+
+const handleAdminAdultSiteName = async (ctx) => {
+  updateSession(ctx.from.id, { state: 'admin_adult_site_url', name: ctx.message.text.trim() });
+  return ctx.reply('Введите URL сайта:');
+};
+
+const handleAdminAdultSiteUrl = async (ctx) => {
+  const session = getSession(ctx.from.id);
+  const url = ctx.message.text.trim();
+
+  if (session.editingAdultSiteId) {
+    db.updateAdultSite(session.editingAdultSiteId, session.name, url);
+    clearSession(ctx.from.id);
+    return ctx.reply(`✅ Сайт <b>${session.name}</b> обновлён!`, { parse_mode: 'HTML', ...kbMainMenu() });
+  } else {
+    db.addAdultSite(session.name, url);
+    clearSession(ctx.from.id);
+    return ctx.reply(`✅ Адалт-сайт <b>${session.name}</b> добавлен!`, { parse_mode: 'HTML' });
+  }
 };

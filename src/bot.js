@@ -47,6 +47,11 @@ bot.action(/^site:(\d+)$/,     (ctx) => userHandlers.handleSiteDetail(ctx));
 bot.action(/^done:(\d+)$/,     (ctx) => userHandlers.handleSiteDone(ctx, bot));
 bot.action('wallet_edit',      (ctx) => userHandlers.handleWalletEdit(ctx));
 
+// Adult
+bot.action('adult_back',           (ctx) => userHandlers.handleAdultBack(ctx));
+bot.action(/^adult_site:(\d+)$/,   (ctx) => userHandlers.handleAdultSiteDetail(ctx));
+bot.action(/^adult_done:(\d+)$/,   (ctx) => userHandlers.handleAdultDone(ctx, bot));
+
 // ─── Коллбэки администратора ──────────────────────────────────────────────────
 
 // Хелпер — проверка прав
@@ -88,6 +93,19 @@ bot.action(/^admin_wd_ok:(\d+)$/,       ag((ctx) => adminHandlers.handleWdApprov
 bot.action(/^admin_wd_no:(\d+)$/,       ag((ctx) => adminHandlers.handleWdReject(ctx, bot)));
 bot.action(/^admin_verif_ok:(\d+)$/,    ag((ctx) => adminHandlers.handleVerifApprove(ctx, bot)));
 bot.action(/^admin_verif_no:(\d+)$/,    ag((ctx) => adminHandlers.handleVerifReject(ctx, bot)));
+
+// Adult admin actions
+bot.action('admin_adult_sites',                ag((ctx) => adminHandlers.handleAdminAdultSites(ctx)));
+bot.action('admin_adult_regs',                 ag((ctx) => adminHandlers.handleAdminAdultRegs(ctx)));
+bot.action('admin_adult_site_add',             ag((ctx) => adminHandlers.handleAdminAdultSiteAdd(ctx)));
+bot.action(/^admin_adult_site:(\d+)$/,         ag((ctx) => adminHandlers.handleAdminAdultSiteDetail(ctx)));
+bot.action(/^admin_adult_site_toggle:(\d+)$/,  ag((ctx) => adminHandlers.handleAdminAdultSiteToggle(ctx)));
+bot.action(/^admin_adult_site_edit:(\d+)$/,    ag((ctx) => adminHandlers.handleAdminAdultSiteEdit(ctx)));
+bot.action(/^admin_adult_site_delete:(\d+)$/,  ag((ctx) => adminHandlers.handleAdminAdultSiteDelete(ctx)));
+bot.action(/^admin_adult_reg_ok:(\d+)$/,       ag((ctx) => adminHandlers.handleAdultRegApprove(ctx, bot)));
+bot.action(/^admin_adult_reg_no:(\d+)$/,       ag((ctx) => adminHandlers.handleAdultRegReject(ctx, bot)));
+bot.action(/^admin_adult_reg_next:(\d+)$/,     ag((ctx) => adminHandlers.handleAdminAdultRegNav(ctx, 'next')));
+bot.action(/^admin_adult_reg_prev:(\d+)$/,     ag((ctx) => adminHandlers.handleAdminAdultRegNav(ctx, 'prev')));
 
 // ─── Обработка ошибок ─────────────────────────────────────────────────────────
 

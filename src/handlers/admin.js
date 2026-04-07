@@ -5,6 +5,7 @@ import {
   kbAdminReg, kbAdminWithdrawal, kbAdminVerif,
   kbAdminCodes, kbMainMenu, kbStartVerification, kbCancel,
   kbBroadcastTarget,
+  kbAdminAdultSites, kbAdminAdultSiteDetail, kbAdminAdultReg,
 } from '../keyboards.js';
 import { setSession, clearSession, getSession, updateSession } from '../session.js';
 
@@ -33,13 +34,13 @@ export const handleAdminVerifs = async (ctx) => {
 
   await ctx.answerCbQuery();
   await ctx.reply(
-    `🔐 <b>Верификация пользователя</b>\n\n` +
-    `Имя: ${user.first_name}\n` +
-    `Username: @${user.username || '—'}\n` +
-    `ID: <code>${user.telegram_id}</code>\n` +
-    `Фото: ${photos.length} шт.\n` +
-    `Ожидают: ${users.length} чел.`,
-    { parse_mode: 'HTML', ...kbAdminVerif(user.id) }
+      `🔐 <b>Верификация пользователя</b>\n\n` +
+      `Имя: ${user.first_name}\n` +
+      `Username: @${user.username || '—'}\n` +
+      `ID: <code>${user.telegram_id}</code>\n` +
+      `Фото: ${photos.length} шт.\n` +
+      `Ожидают: ${users.length} чел.`,
+      { parse_mode: 'HTML', ...kbAdminVerif(user.id) }
   );
   for (const photo of photos) {
     try { await ctx.replyWithPhoto(photo.file_id); } catch {}
@@ -57,9 +58,9 @@ export const handleVerifApprove = async (ctx, bot) => {
 
   try {
     await bot.telegram.sendMessage(
-      user.telegram_id,
-      '🎉 <b>Верификация пройдена!</b>\n\nТеперь вам доступно полное меню бота.',
-      { parse_mode: 'HTML', ...kbMainMenu() }
+        user.telegram_id,
+        '🎉 <b>Верификация пройдена!</b>\n\nТеперь вам доступно полное меню бота.',
+        { parse_mode: 'HTML', ...kbMainMenu() }
     );
   } catch {}
 
@@ -69,8 +70,8 @@ export const handleVerifApprove = async (ctx, bot) => {
     const next = nextUsersApprove[0];
     const photos = db.getVerificationPhotos(next.id);
     await ctx.reply(
-      `🔐 <b>Верификация пользователя</b>\n\nИмя: ${next.first_name}\nUsername: @${next.username || '—'}\nID: <code>${next.telegram_id}</code>\nФото: ${photos.length} шт.\nОжидают: ${nextUsersApprove.length} чел.`,
-      { parse_mode: 'HTML', ...kbAdminVerif(next.id) }
+        `🔐 <b>Верификация пользователя</b>\n\nИмя: ${next.first_name}\nUsername: @${next.username || '—'}\nID: <code>${next.telegram_id}</code>\nФото: ${photos.length} шт.\nОжидают: ${nextUsersApprove.length} чел.`,
+        { parse_mode: 'HTML', ...kbAdminVerif(next.id) }
     );
     for (const photo of photos) {
       try { await ctx.replyWithPhoto(photo.file_id); } catch {}
@@ -89,9 +90,9 @@ export const handleVerifReject = async (ctx, bot) => {
 
   try {
     await bot.telegram.sendMessage(
-      user.telegram_id,
-      '❌ <b>Верификация отклонена.</b>\n\nПожалуйста, попробуйте снова или свяжитесь с менеджером.',
-      { parse_mode: 'HTML', ...kbStartVerification() }
+        user.telegram_id,
+        '❌ <b>Верификация отклонена.</b>\n\nПожалуйста, попробуйте снова или свяжитесь с менеджером.',
+        { parse_mode: 'HTML', ...kbStartVerification() }
     );
   } catch {}
 
@@ -101,8 +102,8 @@ export const handleVerifReject = async (ctx, bot) => {
     const next = nextUsersReject[0];
     const photos = db.getVerificationPhotos(next.id);
     await ctx.reply(
-      `🔐 <b>Верификация пользователя</b>\n\nИмя: ${next.first_name}\nUsername: @${next.username || '—'}\nID: <code>${next.telegram_id}</code>\nФото: ${photos.length} шт.\nОжидают: ${nextUsersReject.length} чел.`,
-      { parse_mode: 'HTML', ...kbAdminVerif(next.id) }
+        `🔐 <b>Верификация пользователя</b>\n\nИмя: ${next.first_name}\nUsername: @${next.username || '—'}\nID: <code>${next.telegram_id}</code>\nФото: ${photos.length} шт.\nОжидают: ${nextUsersReject.length} чел.`,
+        { parse_mode: 'HTML', ...kbAdminVerif(next.id) }
     );
     for (const photo of photos) {
       try { await ctx.replyWithPhoto(photo.file_id); } catch {}
@@ -124,12 +125,12 @@ export const handleAdminSiteDetail = async (ctx) => {
   if (!site) return ctx.answerCbQuery('Сайт не найден', { show_alert: true });
 
   await ctx.editMessageText(
-    `🌐 <b>${site.name}</b>\n\n` +
-    `🔗 URL: ${site.url}\n` +
-    `💰 Оплата: $${site.payment}\n` +
-    `👥 Реф. %: ${site.referral_percent}%\n` +
-    `Статус: ${site.is_active ? '✅ Активен' : '❌ Отключён'}`,
-    { parse_mode: 'HTML', ...kbAdminSiteDetail(siteId, !!site.is_active) }
+      `🌐 <b>${site.name}</b>\n\n` +
+      `🔗 URL: ${site.url}\n` +
+      `💰 Оплата: $${site.payment}\n` +
+      `👥 Реф. %: ${site.referral_percent}%\n` +
+      `Статус: ${site.is_active ? '✅ Активен' : '❌ Отключён'}`,
+      { parse_mode: 'HTML', ...kbAdminSiteDetail(siteId, !!site.is_active) }
   );
   return ctx.answerCbQuery();
 };
@@ -140,12 +141,12 @@ export const handleAdminSiteToggle = async (ctx) => {
   db.toggleSite(siteId, !site.is_active);
   const updated = db.getSite(siteId);
   await ctx.editMessageText(
-    `🌐 <b>${updated.name}</b>\n\n` +
-    `🔗 URL: ${updated.url}\n` +
-    `💰 Оплата: $${updated.payment}\n` +
-    `👥 Реф. %: ${updated.referral_percent}%\n` +
-    `Статус: ${updated.is_active ? '✅ Активен' : '❌ Отключён'}`,
-    { parse_mode: 'HTML', ...kbAdminSiteDetail(siteId, !!updated.is_active) }
+      `🌐 <b>${updated.name}</b>\n\n` +
+      `🔗 URL: ${updated.url}\n` +
+      `💰 Оплата: $${updated.payment}\n` +
+      `👥 Реф. %: ${updated.referral_percent}%\n` +
+      `Статус: ${updated.is_active ? '✅ Активен' : '❌ Отключён'}`,
+      { parse_mode: 'HTML', ...kbAdminSiteDetail(siteId, !!updated.is_active) }
   );
   return ctx.answerCbQuery('Обновлено!');
 };
@@ -162,8 +163,8 @@ export const handleAdminSiteEdit = async (ctx) => {
   setSession(ctx.from.id, { state: 'admin_site_name', editingSiteId: siteId });
   await ctx.answerCbQuery();
   return ctx.reply(
-    `✏️ Редактирование <b>${site.name}</b>\n\nВведите новое название:`,
-    { parse_mode: 'HTML', ...kbCancel() }
+      `✏️ Редактирование <b>${site.name}</b>\n\nВведите новое название:`,
+      { parse_mode: 'HTML', ...kbCancel() }
   );
 };
 
@@ -182,16 +183,165 @@ export const handleAdminSiteDelete = async (ctx) => {
   });
 };
 
+// ─── Adult Sites (Admin) ──────────────────────────────────────────────────────
+
+export const handleAdminAdultSites = async (ctx) => {
+  const sites = db.getAllAdultSitesAdmin();
+  await ctx.editMessageText('🔞 <b>Адалт-сайты</b>', { parse_mode: 'HTML', ...kbAdminAdultSites(sites) });
+  return ctx.answerCbQuery();
+};
+
+export const handleAdminAdultSiteDetail = async (ctx) => {
+  const siteId = parseInt(ctx.match[1]);
+  const site = db.getAdultSite(siteId);
+  if (!site) return ctx.answerCbQuery('Сайт не найден', { show_alert: true });
+
+  await ctx.editMessageText(
+      `🔞 <b>${site.name}</b>\n\n` +
+      `🔗 URL: ${site.url}\n` +
+      `Статус: ${site.is_active ? '✅ Активен' : '❌ Отключён'}`,
+      { parse_mode: 'HTML', ...kbAdminAdultSiteDetail(siteId, !!site.is_active) }
+  );
+  return ctx.answerCbQuery();
+};
+
+export const handleAdminAdultSiteToggle = async (ctx) => {
+  const siteId = parseInt(ctx.match[1]);
+  const site = db.getAdultSite(siteId);
+  db.toggleAdultSite(siteId, !site.is_active);
+  const updated = db.getAdultSite(siteId);
+  await ctx.editMessageText(
+      `🔞 <b>${updated.name}</b>\n\n` +
+      `🔗 URL: ${updated.url}\n` +
+      `Статус: ${updated.is_active ? '✅ Активен' : '❌ Отключён'}`,
+      { parse_mode: 'HTML', ...kbAdminAdultSiteDetail(siteId, !!updated.is_active) }
+  );
+  return ctx.answerCbQuery('Обновлено!');
+};
+
+export const handleAdminAdultSiteAdd = async (ctx) => {
+  setSession(ctx.from.id, { state: 'admin_adult_site_name' });
+  await ctx.answerCbQuery();
+  return ctx.reply('➕ <b>Добавление адалт-сайта</b>\n\nВведите название:', { parse_mode: 'HTML', ...kbCancel() });
+};
+
+export const handleAdminAdultSiteEdit = async (ctx) => {
+  const siteId = parseInt(ctx.match[1]);
+  const site = db.getAdultSite(siteId);
+  setSession(ctx.from.id, { state: 'admin_adult_site_name', editingAdultSiteId: siteId });
+  await ctx.answerCbQuery();
+  return ctx.reply(
+      `✏️ Редактирование <b>${site.name}</b>\n\nВведите новое название:`,
+      { parse_mode: 'HTML', ...kbCancel() }
+  );
+};
+
+export const handleAdminAdultSiteDelete = async (ctx) => {
+  const siteId = parseInt(ctx.match[1]);
+  const site = db.getAdultSite(siteId);
+  if (!site) return ctx.answerCbQuery('Сайт не найден', { show_alert: true });
+
+  db.deleteAdultSite(siteId);
+  await ctx.answerCbQuery(`🗑 "${site.name}" удалён`, { show_alert: true });
+
+  const sites = db.getAllAdultSitesAdmin();
+  await ctx.editMessageText('🔞 <b>Адалт-сайты</b>', { parse_mode: 'HTML', ...kbAdminAdultSites(sites) });
+};
+
+// ─── Adult Registrations (Admin) ──────────────────────────────────────────────
+
+const sendAdultRegCard = async (ctx, regs, index, edit = false) => {
+  const reg = regs[index];
+  const text =
+      `🔞 <b>Адалт-заявка #${reg.id}</b>\n\n` +
+      `Пользователь: ${reg.first_name} (@${reg.username || '—'})\n` +
+      `ID: <code>${reg.telegram_id}</code>\n` +
+      `Сайт: <b>${reg.site_name}</b>`;
+
+  const kb = kbAdminAdultReg(reg.id, index, regs.length);
+
+  if (edit) {
+    await ctx.editMessageText(text, { parse_mode: 'HTML', ...kb });
+  } else {
+    await ctx.reply(text, { parse_mode: 'HTML', ...kb });
+  }
+};
+
+export const handleAdminAdultRegs = async (ctx) => {
+  const regs = db.getPendingAdultRegistrations();
+  if (!regs.length) return ctx.answerCbQuery('✅ Нет адалт-заявок на проверке', { show_alert: true });
+  await ctx.answerCbQuery();
+  await sendAdultRegCard(ctx, regs, 0, false);
+};
+
+export const handleAdminAdultRegNav = async (ctx, direction) => {
+  const regs = db.getPendingAdultRegistrations();
+  if (!regs.length) return ctx.answerCbQuery('✅ Больше нет заявок', { show_alert: true });
+
+  const currentIndex = parseInt(ctx.match[1]);
+  let newIndex;
+  if (direction === 'next') {
+    newIndex = currentIndex + 1 >= regs.length ? 0 : currentIndex + 1;
+  } else {
+    newIndex = currentIndex - 1 < 0 ? regs.length - 1 : currentIndex - 1;
+  }
+
+  await ctx.answerCbQuery();
+  await sendAdultRegCard(ctx, regs, newIndex, true);
+};
+
+export const handleAdultRegApprove = async (ctx, bot) => {
+  const regId = parseInt(ctx.match[1]);
+  const reg = db.getAdultRegistration(regId);
+  if (!reg) return ctx.answerCbQuery('Заявка не найдена', { show_alert: true });
+
+  db.updateAdultRegistrationStatus(regId, 'approved');
+  await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
+  await ctx.answerCbQuery('✅ Одобрено!');
+
+  try {
+    await bot.telegram.sendMessage(
+        reg.telegram_id,
+        `✅ <b>Ваша заявка одобрена!</b>\n\nСайт: <b>${reg.site_name}</b>`,
+        { parse_mode: 'HTML' }
+    );
+  } catch {}
+
+  const remaining = db.getPendingAdultRegistrations();
+  if (remaining.length) await sendAdultRegCard(ctx, remaining, 0, false);
+};
+
+export const handleAdultRegReject = async (ctx, bot) => {
+  const regId = parseInt(ctx.match[1]);
+  const reg = db.getAdultRegistration(regId);
+  if (!reg) return ctx.answerCbQuery('Заявка не найдена', { show_alert: true });
+
+  db.updateAdultRegistrationStatus(regId, 'rejected');
+  await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
+  await ctx.answerCbQuery('❌ Отклонено');
+
+  try {
+    await bot.telegram.sendMessage(
+        reg.telegram_id,
+        `❌ <b>Заявка отклонена.</b>\n\nСайт: <b>${reg.site_name}</b>\n\nПопробуйте ещё раз или свяжитесь с менеджером.`,
+        { parse_mode: 'HTML' }
+    );
+  } catch {}
+
+  const remaining = db.getPendingAdultRegistrations();
+  if (remaining.length) await sendAdultRegCard(ctx, remaining, 0, false);
+};
+
 // ─── Registrations ────────────────────────────────────────────────────────────
 
 const sendRegCard = async (ctx, regs, index, edit = false) => {
   const reg = regs[index];
   const text =
-    `📝 <b>Регистрация #${reg.id}</b>\n\n` +
-    `Пользователь: ${reg.first_name} (@${reg.username || '—'})\n` +
-    `ID: <code>${reg.telegram_id}</code>\n` +
-    `Сайт: <b>${reg.site_name}</b>\n` +
-    `Оплата: <b>$${reg.payment}</b>`;
+      `📝 <b>Регистрация #${reg.id}</b>\n\n` +
+      `Пользователь: ${reg.first_name} (@${reg.username || '—'})\n` +
+      `ID: <code>${reg.telegram_id}</code>\n` +
+      `Сайт: <b>${reg.site_name}</b>\n` +
+      `Оплата: <b>$${reg.payment}</b>`;
 
   const kb = kbAdminReg(reg.id, index, regs.length);
 
@@ -240,9 +390,9 @@ export const handleRegApprove = async (ctx, bot) => {
     if (referrer) {
       try {
         await bot.telegram.sendMessage(
-          referrer.telegram_id,
-          `🎉 Ваш реферал выполнил регистрацию на <b>${reg.site_name}</b>!\nВам начислено: <b>$${refAmount.toFixed(2)}</b>`,
-          { parse_mode: 'HTML' }
+            referrer.telegram_id,
+            `🎉 Ваш реферал выполнил регистрацию на <b>${reg.site_name}</b>!\nВам начислено: <b>$${refAmount.toFixed(2)}</b>`,
+            { parse_mode: 'HTML' }
         );
       } catch {}
     }
@@ -260,9 +410,9 @@ export const handleRegApprove = async (ctx, bot) => {
 
   try {
     await bot.telegram.sendMessage(
-      reg.telegram_id,
-      `✅ <b>Регистрация подтверждена!</b>\n\nСайт: <b>${reg.site_name}</b>\nНачислено: <b>$${reg.payment.toFixed(2)}</b>`,
-      { parse_mode: 'HTML' }
+        reg.telegram_id,
+        `✅ <b>Регистрация подтверждена!</b>\n\nСайт: <b>${reg.site_name}</b>\nНачислено: <b>$${reg.payment.toFixed(2)}</b>`,
+        { parse_mode: 'HTML' }
     );
   } catch {}
 };
@@ -285,9 +435,9 @@ export const handleRegReject = async (ctx, bot) => {
 
   try {
     await bot.telegram.sendMessage(
-      reg.telegram_id,
-      `❌ <b>Регистрация отклонена</b>\n\nСайт: <b>${reg.site_name}</b>\n\nЕсли есть вопросы — обратитесь к менеджеру.`,
-      { parse_mode: 'HTML' }
+        reg.telegram_id,
+        `❌ <b>Регистрация отклонена</b>\n\nСайт: <b>${reg.site_name}</b>\n\nЕсли есть вопросы — обратитесь к менеджеру.`,
+        { parse_mode: 'HTML' }
     );
   } catch {}
 };
@@ -301,12 +451,12 @@ export const handleAdminWithdrawals = async (ctx) => {
   const wd = wds[0];
   await ctx.answerCbQuery();
   return ctx.reply(
-    `💸 <b>Заявка на вывод #${wd.id}</b>\n\n` +
-    `Пользователь: ${wd.first_name} (@${wd.username || '—'})\n` +
-    `Сумма: <b>$${wd.amount.toFixed(2)}</b>\n` +
-    `Кошелек: <code>${wd.wallet}</code>\n` +
-    `Ожидают: ${wds.length} шт.`,
-    { parse_mode: 'HTML', ...kbAdminWithdrawal(wd.id) }
+      `💸 <b>Заявка на вывод #${wd.id}</b>\n\n` +
+      `Пользователь: ${wd.first_name} (@${wd.username || '—'})\n` +
+      `Сумма: <b>$${wd.amount.toFixed(2)}</b>\n` +
+      `Кошелек: <code>${wd.wallet}</code>\n` +
+      `Ожидают: ${wds.length} шт.`,
+      { parse_mode: 'HTML', ...kbAdminWithdrawal(wd.id) }
   );
 };
 
@@ -321,9 +471,9 @@ export const handleWdApprove = async (ctx, bot) => {
 
   try {
     await bot.telegram.sendMessage(
-      wd.telegram_id,
-      `✅ <b>Выплата подтверждена!</b>\n\nСумма: <b>$${wd.amount.toFixed(2)}</b>\nКошелек: <code>${wd.wallet}</code>\n\nСредства отправлены!`,
-      { parse_mode: 'HTML' }
+        wd.telegram_id,
+        `✅ <b>Выплата подтверждена!</b>\n\nСумма: <b>$${wd.amount.toFixed(2)}</b>\nКошелек: <code>${wd.wallet}</code>\n\nСредства отправлены!`,
+        { parse_mode: 'HTML' }
     );
   } catch {}
 };
@@ -340,9 +490,9 @@ export const handleWdReject = async (ctx, bot) => {
 
   try {
     await bot.telegram.sendMessage(
-      wd.telegram_id,
-      `❌ <b>Заявка на вывод отклонена.</b>\n\nСумма $${wd.amount.toFixed(2)} возвращена на баланс.`,
-      { parse_mode: 'HTML' }
+        wd.telegram_id,
+        `❌ <b>Заявка на вывод отклонена.</b>\n\nСумма $${wd.amount.toFixed(2)} возвращена на баланс.`,
+        { parse_mode: 'HTML' }
     );
   } catch {}
 };
@@ -359,8 +509,8 @@ export const handleAdminCodeNew = async (ctx) => {
   const code = db.createInviteCode(ctx.from.id);
   const codes = db.getAllInviteCodes();
   await ctx.editMessageText(
-    `🎟 <b>Инвайт-коды</b>\n\n✅ Создан новый код: <code>${code}</code>`,
-    { parse_mode: 'HTML', ...kbAdminCodes(codes) }
+      `🎟 <b>Инвайт-коды</b>\n\n✅ Создан новый код: <code>${code}</code>`,
+      { parse_mode: 'HTML', ...kbAdminCodes(codes) }
   );
   return ctx.answerCbQuery(`✅ Код: ${code}`, { show_alert: true });
 };
@@ -401,8 +551,8 @@ export const handleAdminTopup = async (ctx) => {
   setSession(ctx.from.id, { state: 'admin_topup_id' });
   await ctx.answerCbQuery();
   return ctx.reply(
-    '💰 <b>Пополнение баланса</b>\n\nВведите <b>@username</b> или <b>Telegram ID</b> пользователя:',
-    { parse_mode: 'HTML', ...kbCancel() }
+      '💰 <b>Пополнение баланса</b>\n\nВведите <b>@username</b> или <b>Telegram ID</b> пользователя:',
+      { parse_mode: 'HTML', ...kbCancel() }
   );
 };
 
@@ -456,8 +606,8 @@ export const handleAdminExport = async (ctx) => {
   for (const u of users) {
     const referrer = u.referrer_id ? userById[u.referrer_id] : null;
     const referrerStr = referrer
-      ? (referrer.username ? `@${referrer.username}` : referrer.first_name)
-      : '—';
+        ? (referrer.username ? `@${referrer.username}` : referrer.first_name)
+        : '—';
 
     const row = [
       u.username ? `@${u.username}` : '—',
@@ -512,8 +662,8 @@ export const handleAdminExport = async (ctx) => {
 
   await ctx.answerCbQuery();
   await ctx.replyWithDocument(
-    { source: filePath, filename: `export_${new Date().toISOString().slice(0,10)}.xlsx` },
-    { caption: `📊 Экспорт данных\nПользователей: ${users.length} | Сайтов: ${sites.length}\n\n📋 Лист 1: Пользователи + регистрации\n👥 Лист 2: Реферальная статистика` }
+      { source: filePath, filename: `export_${new Date().toISOString().slice(0,10)}.xlsx` },
+      { caption: `📊 Экспорт данных\nПользователей: ${users.length} | Сайтов: ${sites.length}\n\n📋 Лист 1: Пользователи + регистрации\n👥 Лист 2: Реферальная статистика` }
   );
 };
 
@@ -567,23 +717,23 @@ export const handleDbUser = async (ctx) => {
 
   const regs = db.getUserRegistrations(userId);
   const regText = regs.length
-    ? regs.map(r => {
+      ? regs.map(r => {
         const icon = r.status === 'approved' ? '✅' : r.status === 'pending' ? '⏳' : '❌';
         return `  ${icon} ${r.site_name}`;
       }).join('\n')
-    : '  Нет регистраций';
+      : '  Нет регистраций';
 
   const text =
-    `👤 <b>Пользователь #${u.id}</b>\n\n` +
-    `Имя: <b>${u.first_name}</b>\n` +
-    `Username: @${u.username || '—'}\n` +
-    `Telegram ID: <code>${u.telegram_id}</code>\n` +
-    `Верифицирован: ${u.is_verified ? '✅ Да' : '❌ Нет'}\n` +
-    `Кошелёк: ${u.wallet || '—'}\n\n` +
-    `💰 Баланс: <b>$${u.balance.toFixed(2)}</b>\n` +
-    `📋 С регистраций: $${u.registration_balance.toFixed(2)}\n` +
-    `👥 С рефералов: $${u.referral_balance.toFixed(2)}\n\n` +
-    `📋 Регистрации:\n${regText}`;
+      `👤 <b>Пользователь #${u.id}</b>\n\n` +
+      `Имя: <b>${u.first_name}</b>\n` +
+      `Username: @${u.username || '—'}\n` +
+      `Telegram ID: <code>${u.telegram_id}</code>\n` +
+      `Верифицирован: ${u.is_verified ? '✅ Да' : '❌ Нет'}\n` +
+      `Кошелёк: ${u.wallet || '—'}\n\n` +
+      `💰 Баланс: <b>$${u.balance.toFixed(2)}</b>\n` +
+      `📋 С регистраций: $${u.registration_balance.toFixed(2)}\n` +
+      `👥 С рефералов: $${u.referral_balance.toFixed(2)}\n\n` +
+      `📋 Регистрации:\n${regText}`;
 
   const kb = Markup.inlineKeyboard([
     [
@@ -606,8 +756,8 @@ export const handleDbSetBalance = async (ctx) => {
   setSession(ctx.from.id, { state: 'db_setbal', dbUserId: userId, dbUserName: u.first_name });
   await ctx.answerCbQuery();
   return ctx.reply(
-    `💰 Введите новый баланс для <b>${u.first_name}</b>:`,
-    { parse_mode: 'HTML', ...kbCancel() }
+      `💰 Введите новый баланс для <b>${u.first_name}</b>:`,
+      { parse_mode: 'HTML', ...kbCancel() }
   );
 };
 
@@ -625,10 +775,10 @@ export const handleDbToggleVerif = async (ctx) => {
   db.setVerifiedById(userId, !u.is_verified);
   await ctx.answerCbQuery(u.is_verified ? '🔒 Верификация снята' : '✅ Верифицирован', { show_alert: true });
   return ctx.reply(
-    u.is_verified
-      ? `🔒 Верификация снята у <b>${u.first_name}</b>.`
-      : `✅ <b>${u.first_name}</b> верифицирован.`,
-    { parse_mode: 'HTML' }
+      u.is_verified
+          ? `🔒 Верификация снята у <b>${u.first_name}</b>.`
+          : `✅ <b>${u.first_name}</b> верифицирован.`,
+      { parse_mode: 'HTML' }
   );
 };
 
@@ -652,8 +802,8 @@ export const handleDbBack = async (ctx) => {
 export const handleAdminBroadcast = async (ctx) => {
   await ctx.answerCbQuery();
   await ctx.reply(
-    '📢 <b>Рассылка</b>\n\nВыберите кому отправить сообщение:',
-    { parse_mode: 'HTML', ...kbBroadcastTarget() }
+      '📢 <b>Рассылка</b>\n\nВыберите кому отправить сообщение:',
+      { parse_mode: 'HTML', ...kbBroadcastTarget() }
   );
 };
 
@@ -667,8 +817,8 @@ export const handleBroadcastTarget = async (ctx) => {
   setSession(ctx.from.id, { state: 'broadcast_text', broadcastTarget: target });
   await ctx.answerCbQuery();
   return ctx.reply(
-    `📢 <b>Рассылка — ${labelMap[target]}</b>\n\nВведите текст сообщения:\n\n<i>Поддерживается <b>жирный</b>, <i>курсив</i>, ссылки</i>`,
-    { parse_mode: 'HTML', ...kbCancel() }
+      `📢 <b>Рассылка — ${labelMap[target]}</b>\n\nВведите текст сообщения:\n\n<i>Поддерживается <b>жирный</b>, <i>курсив</i>, ссылки</i>`,
+      { parse_mode: 'HTML', ...kbCancel() }
   );
 };
 
@@ -686,8 +836,8 @@ export const handleBroadcastSend = async (ctx, bot) => {
   };
 
   await ctx.reply(
-    `📤 Отправляю рассылку ${labelMap[target]}...\nПолучателей: <b>${users.length}</b>`,
-    { parse_mode: 'HTML' }
+      `📤 Отправляю рассылку ${labelMap[target]}...\nПолучателей: <b>${users.length}</b>`,
+      { parse_mode: 'HTML' }
   );
 
   let sent = 0;
@@ -705,7 +855,7 @@ export const handleBroadcastSend = async (ctx, bot) => {
   }
 
   return ctx.reply(
-    `✅ <b>Рассылка завершена!</b>\n\n✅ Отправлено: <b>${sent}</b>\n❌ Не доставлено: <b>${failed}</b>`,
-    { parse_mode: 'HTML' }
+      `✅ <b>Рассылка завершена!</b>\n\n✅ Отправлено: <b>${sent}</b>\n❌ Не доставлено: <b>${failed}</b>`,
+      { parse_mode: 'HTML' }
   );
 };

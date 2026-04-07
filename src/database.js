@@ -71,6 +71,26 @@ db.exec(`
     submitted_at TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (user_id) REFERENCES users(id)
   );
+
+  CREATE TABLE IF NOT EXISTS adult_sites (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    is_active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS adult_registrations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    site_id INTEGER NOT NULL,
+    status TEXT DEFAULT 'pending',
+    submitted_at TEXT DEFAULT (datetime('now')),
+    reviewed_at TEXT,
+    UNIQUE(user_id, site_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (site_id) REFERENCES adult_sites(id)
+  );
 `);
 
 // ─── Migrations ──────────────────────────────────────────────────────────────
@@ -97,42 +117,42 @@ if (siteCount === 0) {
 // ─── Users ────────────────────────────────────────────────────────────────────
 
 export const getUser = (telegramId) =>
-  db.prepare('SELECT * FROM users WHERE telegram_id = ?').get(telegramId);
+    db.prepare('SELECT * FROM users WHERE telegram_id = ?').get(telegramId);
 
 export const getUserByDbId = (id) =>
-  db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+    db.prepare('SELECT * FROM users WHERE id = ?').get(id);
 
 export const createUser = (telegramId, username, firstName, referrerId = null) =>
-  db.prepare(
-    'INSERT OR IGNORE INTO users (telegram_id, username, first_name, referrer_id) VALUES (?,?,?,?)'
-  ).run(telegramId, username || '', firstName || '', referrerId);
+    db.prepare(
+        'INSERT OR IGNORE INTO users (telegram_id, username, first_name, referrer_id) VALUES (?,?,?,?)'
+    ).run(telegramId, username || '', firstName || '', referrerId);
 
 export const setVerified = (telegramId, verified) =>
-  db.prepare('UPDATE users SET is_verified = ? WHERE telegram_id = ?').run(verified ? 1 : 0, telegramId);
+    db.prepare('UPDATE users SET is_verified = ? WHERE telegram_id = ?').run(verified ? 1 : 0, telegramId);
 
 export const updateWallet = (telegramId, wallet) =>
-  db.prepare('UPDATE users SET wallet = ? WHERE telegram_id = ?').run(wallet, telegramId);
+    db.prepare('UPDATE users SET wallet = ? WHERE telegram_id = ?').run(wallet, telegramId);
 
 export const addBalance = (userDbId, amount, source = 'registration') => {
   if (source === 'referral') {
     db.prepare(
-      'UPDATE users SET balance = balance + ?, referral_balance = referral_balance + ? WHERE id = ?'
+        'UPDATE users SET balance = balance + ?, referral_balance = referral_balance + ? WHERE id = ?'
     ).run(amount, amount, userDbId);
   } else {
     db.prepare(
-      'UPDATE users SET balance = balance + ?, registration_balance = registration_balance + ? WHERE id = ?'
+        'UPDATE users SET balance = balance + ?, registration_balance = registration_balance + ? WHERE id = ?'
     ).run(amount, amount, userDbId);
   }
 };
 
 export const deductBalance = (userDbId, amount) =>
-  db.prepare('UPDATE users SET balance = balance - ? WHERE id = ?').run(amount, userDbId);
+    db.prepare('UPDATE users SET balance = balance - ? WHERE id = ?').run(amount, userDbId);
 
 export const getAllUsers = () =>
-  db.prepare('SELECT * FROM users ORDER BY created_at DESC').all();
+    db.prepare('SELECT * FROM users ORDER BY created_at DESC').all();
 
 export const getReferrals = (userDbId) =>
-  db.prepare('SELECT * FROM users WHERE referrer_id = ?').all(userDbId);
+    db.prepare('SELECT * FROM users WHERE referrer_id = ?').all(userDbId);
 
 // ─── Invite Codes ─────────────────────────────────────────────────────────────
 
@@ -145,49 +165,49 @@ export const createInviteCode = (createdBy = null) => {
 };
 
 export const validateInviteCode = (code) =>
-  db.prepare('SELECT * FROM invite_codes WHERE code = ? AND is_active = 1').get(code);
+    db.prepare('SELECT * FROM invite_codes WHERE code = ? AND is_active = 1').get(code);
 
 export const deactivateInviteCode = (code) =>
-  db.prepare('UPDATE invite_codes SET is_active = 0 WHERE code = ?').run(code);
+    db.prepare('UPDATE invite_codes SET is_active = 0 WHERE code = ?').run(code);
 
 export const getAllInviteCodes = () =>
-  db.prepare('SELECT * FROM invite_codes ORDER BY created_at DESC').all();
+    db.prepare('SELECT * FROM invite_codes ORDER BY created_at DESC').all();
 
 // ─── Sites ────────────────────────────────────────────────────────────────────
 
 export const getSites = () =>
-  db.prepare('SELECT * FROM sites WHERE is_active = 1 ORDER BY id').all();
+    db.prepare('SELECT * FROM sites WHERE is_active = 1 ORDER BY id').all();
 
 export const getSite = (id) =>
-  db.prepare('SELECT * FROM sites WHERE id = ?').get(id);
+    db.prepare('SELECT * FROM sites WHERE id = ?').get(id);
 
 export const addSite = (name, url, payment, referralPercent) =>
-  db.prepare('INSERT INTO sites (name, url, payment, referral_percent) VALUES (?,?,?,?)').run(name, url, payment, referralPercent);
+    db.prepare('INSERT INTO sites (name, url, payment, referral_percent) VALUES (?,?,?,?)').run(name, url, payment, referralPercent);
 
 export const updateSite = (id, name, url, payment, referralPercent) =>
-  db.prepare('UPDATE sites SET name=?, url=?, payment=?, referral_percent=? WHERE id=?').run(name, url, payment, referralPercent, id);
+    db.prepare('UPDATE sites SET name=?, url=?, payment=?, referral_percent=? WHERE id=?').run(name, url, payment, referralPercent, id);
 
 export const toggleSite = (id, isActive) =>
-  db.prepare('UPDATE sites SET is_active = ? WHERE id = ?').run(isActive ? 1 : 0, id);
+    db.prepare('UPDATE sites SET is_active = ? WHERE id = ?').run(isActive ? 1 : 0, id);
 
 export const getAllSitesAdmin = () =>
-  db.prepare('SELECT * FROM sites ORDER BY id').all();
+    db.prepare('SELECT * FROM sites ORDER BY id').all();
 
 // ─── Registrations ────────────────────────────────────────────────────────────
 
 export const getUserRegistration = (userDbId, siteId) =>
-  db.prepare('SELECT * FROM registrations WHERE user_id = ? AND site_id = ?').get(userDbId, siteId);
+    db.prepare('SELECT * FROM registrations WHERE user_id = ? AND site_id = ?').get(userDbId, siteId);
 
 export const createRegistration = (userDbId, siteId) =>
-  db.prepare('INSERT OR IGNORE INTO registrations (user_id, site_id) VALUES (?,?)').run(userDbId, siteId);
+    db.prepare('INSERT OR IGNORE INTO registrations (user_id, site_id) VALUES (?,?)').run(userDbId, siteId);
 
 export const resetRejectedRegistration = (userDbId, siteId) =>
-  db.prepare(
-    "UPDATE registrations SET status = 'pending', submitted_at = datetime('now'), reviewed_at = NULL WHERE user_id = ? AND site_id = ? AND status = 'rejected'"
-  ).run(userDbId, siteId);
+    db.prepare(
+        "UPDATE registrations SET status = 'pending', submitted_at = datetime('now'), reviewed_at = NULL WHERE user_id = ? AND site_id = ? AND status = 'rejected'"
+    ).run(userDbId, siteId);
 
 export const getExportData = () =>
-  db.prepare(`
+    db.prepare(`
     SELECT
       u.telegram_id,
       u.username,
@@ -204,10 +224,10 @@ export const getExportData = () =>
 
 
 export const updateRegistrationStatus = (regId, status) =>
-  db.prepare("UPDATE registrations SET status = ?, reviewed_at = datetime('now') WHERE id = ?").run(status, regId);
+    db.prepare("UPDATE registrations SET status = ?, reviewed_at = datetime('now') WHERE id = ?").run(status, regId);
 
 export const getPendingRegistrations = () =>
-  db.prepare(`
+    db.prepare(`
     SELECT r.*, u.telegram_id, u.username, u.first_name,
            s.name AS site_name, s.payment
     FROM registrations r
@@ -218,7 +238,7 @@ export const getPendingRegistrations = () =>
   `).all();
 
 export const getRegistration = (regId) =>
-  db.prepare(`
+    db.prepare(`
     SELECT r.*, u.telegram_id, u.username, u.first_name, u.referrer_id,
            s.name AS site_name, s.payment, s.referral_percent
     FROM registrations r
@@ -228,7 +248,7 @@ export const getRegistration = (regId) =>
   `).get(regId);
 
 export const getUserRegistrations = (userDbId) =>
-  db.prepare(`
+    db.prepare(`
     SELECT r.*, s.name AS site_name, s.payment
     FROM registrations r
     JOIN sites s ON r.site_id = s.id
@@ -243,7 +263,7 @@ export const createWithdrawal = (userDbId, amount, wallet) => {
 };
 
 export const getPendingWithdrawals = () =>
-  db.prepare(`
+    db.prepare(`
     SELECT w.*, u.telegram_id, u.username, u.first_name, u.id AS user_db_id
     FROM withdrawals w
     JOIN users u ON w.user_id = u.id
@@ -252,7 +272,7 @@ export const getPendingWithdrawals = () =>
   `).all();
 
 export const getWithdrawal = (id) =>
-  db.prepare(`
+    db.prepare(`
     SELECT w.*, u.telegram_id, u.username, u.first_name, u.id AS user_db_id
     FROM withdrawals w
     JOIN users u ON w.user_id = u.id
@@ -260,18 +280,18 @@ export const getWithdrawal = (id) =>
   `).get(id);
 
 export const updateWithdrawalStatus = (id, status) =>
-  db.prepare("UPDATE withdrawals SET status = ?, processed_at = datetime('now') WHERE id = ?").run(status, id);
+    db.prepare("UPDATE withdrawals SET status = ?, processed_at = datetime('now') WHERE id = ?").run(status, id);
 
 // ─── Verification Photos ──────────────────────────────────────────────────────
 
 export const saveVerificationPhoto = (userDbId, fileId) =>
-  db.prepare('INSERT INTO verification_photos (user_id, file_id) VALUES (?,?)').run(userDbId, fileId);
+    db.prepare('INSERT INTO verification_photos (user_id, file_id) VALUES (?,?)').run(userDbId, fileId);
 
 export const getVerificationPhotos = (userDbId) =>
-  db.prepare('SELECT * FROM verification_photos WHERE user_id = ? ORDER BY submitted_at').all(userDbId);
+    db.prepare('SELECT * FROM verification_photos WHERE user_id = ? ORDER BY submitted_at').all(userDbId);
 
 export const getUnverifiedUsers = () =>
-  db.prepare(`
+    db.prepare(`
     SELECT DISTINCT u.*
     FROM users u
     JOIN verification_photos vp ON u.id = vp.user_id
@@ -279,19 +299,19 @@ export const getUnverifiedUsers = () =>
   `).all();
 
 export const setVerifRejected = (userDbId) =>
-  db.prepare("UPDATE users SET verif_status = 'rejected' WHERE id = ?").run(userDbId);
+    db.prepare("UPDATE users SET verif_status = 'rejected' WHERE id = ?").run(userDbId);
 
 export const resetVerifStatus = (userDbId) =>
-  db.prepare("UPDATE users SET verif_status = 'none' WHERE id = ?").run(userDbId);
+    db.prepare("UPDATE users SET verif_status = 'none' WHERE id = ?").run(userDbId);
 
 export const getUserByUsername = (username) =>
-  db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(username.replace('@', ''));
+    db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(username.replace('@', ''));
 
 export const deleteSite = (id) =>
-  db.prepare('DELETE FROM sites WHERE id = ?').run(id);
+    db.prepare('DELETE FROM sites WHERE id = ?').run(id);
 
 export const getReferralEarnings = () =>
-  db.prepare(`
+    db.prepare(`
     SELECT
       u.id AS referrer_id,
       u.username,
@@ -306,10 +326,10 @@ export const getReferralEarnings = () =>
   `).all();
 
 export const setBalance = (userDbId, amount) =>
-  db.prepare('UPDATE users SET balance = ?, registration_balance = ?, referral_balance = 0 WHERE id = ?').run(amount, amount, userDbId);
+    db.prepare('UPDATE users SET balance = ?, registration_balance = ?, referral_balance = 0 WHERE id = ?').run(amount, amount, userDbId);
 
 export const setVerifiedById = (userDbId, verified) =>
-  db.prepare('UPDATE users SET is_verified = ? WHERE id = ?').run(verified ? 1 : 0, userDbId);
+    db.prepare('UPDATE users SET is_verified = ? WHERE id = ?').run(verified ? 1 : 0, userDbId);
 
 export const deleteUser = (userDbId) => {
   db.prepare('DELETE FROM verification_photos WHERE user_id = ?').run(userDbId);
@@ -323,6 +343,74 @@ export const getUsersPage = (page, pageSize = 20) => {
   const users = db.prepare('SELECT * FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?').all(pageSize, page * pageSize);
   return { users, total };
 };
+
+// ─── Adult Sites ──────────────────────────────────────────────────────────────
+
+export const getAdultSites = () =>
+    db.prepare('SELECT * FROM adult_sites WHERE is_active = 1 ORDER BY id').all();
+
+export const getAdultSite = (id) =>
+    db.prepare('SELECT * FROM adult_sites WHERE id = ?').get(id);
+
+export const getAllAdultSitesAdmin = () =>
+    db.prepare('SELECT * FROM adult_sites ORDER BY id').all();
+
+export const addAdultSite = (name, url) =>
+    db.prepare('INSERT INTO adult_sites (name, url) VALUES (?,?)').run(name, url);
+
+export const updateAdultSite = (id, name, url) =>
+    db.prepare('UPDATE adult_sites SET name=?, url=? WHERE id=?').run(name, url, id);
+
+export const toggleAdultSite = (id, isActive) =>
+    db.prepare('UPDATE adult_sites SET is_active = ? WHERE id = ?').run(isActive ? 1 : 0, id);
+
+export const deleteAdultSite = (id) =>
+    db.prepare('DELETE FROM adult_sites WHERE id = ?').run(id);
+
+// ─── Adult Registrations ──────────────────────────────────────────────────────
+
+export const getUserAdultRegistration = (userDbId, siteId) =>
+    db.prepare('SELECT * FROM adult_registrations WHERE user_id = ? AND site_id = ?').get(userDbId, siteId);
+
+export const getUserAdultRegistrations = (userDbId) =>
+    db.prepare(`
+    SELECT r.*, s.name AS site_name
+    FROM adult_registrations r
+    JOIN adult_sites s ON r.site_id = s.id
+    WHERE r.user_id = ?
+  `).all(userDbId);
+
+export const createAdultRegistration = (userDbId, siteId) =>
+    db.prepare('INSERT OR IGNORE INTO adult_registrations (user_id, site_id) VALUES (?,?)').run(userDbId, siteId);
+
+export const resetRejectedAdultRegistration = (userDbId, siteId) =>
+    db.prepare(
+        "UPDATE adult_registrations SET status = 'pending', submitted_at = datetime('now'), reviewed_at = NULL WHERE user_id = ? AND site_id = ? AND status = 'rejected'"
+    ).run(userDbId, siteId);
+
+export const getPendingAdultRegistrations = () =>
+    db.prepare(`
+    SELECT r.*, u.telegram_id, u.username, u.first_name,
+           s.name AS site_name
+    FROM adult_registrations r
+    JOIN users u ON r.user_id = u.id
+    JOIN adult_sites s ON r.site_id = s.id
+    WHERE r.status = 'pending'
+    ORDER BY r.submitted_at
+  `).all();
+
+export const getAdultRegistration = (regId) =>
+    db.prepare(`
+    SELECT r.*, u.telegram_id, u.username, u.first_name,
+           s.name AS site_name
+    FROM adult_registrations r
+    JOIN users u ON r.user_id = u.id
+    JOIN adult_sites s ON r.site_id = s.id
+    WHERE r.id = ?
+  `).get(regId);
+
+export const updateAdultRegistrationStatus = (regId, status) =>
+    db.prepare("UPDATE adult_registrations SET status = ?, reviewed_at = datetime('now') WHERE id = ?").run(status, regId);
 
 export const getUsersForBroadcast = (target) => {
   if (target === 'verified') {
