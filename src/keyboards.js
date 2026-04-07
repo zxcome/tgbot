@@ -160,10 +160,8 @@ export const kbAdultList = (sites, regMap) => {
     return Markup.inlineKeyboard(buttons);
 };
 
-export const kbAdultDetail = (siteId, alreadySubmitted, siteUrl) => {
-    const buttons = [
-        [Markup.button.url('🔗 Перейти на сайт', siteUrl)],
-    ];
+export const kbAdultDetail = (siteId, alreadySubmitted) => {
+    const buttons = [];
     if (!alreadySubmitted) {
         buttons.push([Markup.button.callback('✅ Готово', `adult_done:${siteId}`)]);
     }

@@ -415,8 +415,8 @@ export const handleAdultSiteDetail = async (ctx) => {
   const alreadySubmitted = reg && ['pending', 'approved'].includes(reg.status);
 
   await ctx.editMessageText(
-      `🔞 <b>${site.name}</b>\n🔗 Ссылка: ${site.url}${statusText}`,
-      { parse_mode: 'HTML', ...kbAdultDetail(siteId, alreadySubmitted, site.url) }
+      `🔞 <b>${site.name}</b>${statusText}`,
+      { parse_mode: 'HTML', ...kbAdultDetail(siteId, alreadySubmitted) }
   );
   return ctx.answerCbQuery();
 };

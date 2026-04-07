@@ -307,8 +307,10 @@ export const resetVerifStatus = (userDbId) =>
 export const getUserByUsername = (username) =>
     db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(username.replace('@', ''));
 
-export const deleteSite = (id) =>
-    db.prepare('DELETE FROM sites WHERE id = ?').run(id);
+export const deleteSite = (id) => {
+  db.prepare('DELETE FROM registrations WHERE site_id = ?').run(id);
+  db.prepare('DELETE FROM sites WHERE id = ?').run(id);
+};
 
 export const getReferralEarnings = () =>
     db.prepare(`
@@ -364,8 +366,10 @@ export const updateAdultSite = (id, name, url) =>
 export const toggleAdultSite = (id, isActive) =>
     db.prepare('UPDATE adult_sites SET is_active = ? WHERE id = ?').run(isActive ? 1 : 0, id);
 
-export const deleteAdultSite = (id) =>
-    db.prepare('DELETE FROM adult_sites WHERE id = ?').run(id);
+export const deleteAdultSite = (id) => {
+  db.prepare('DELETE FROM adult_registrations WHERE site_id = ?').run(id);
+  db.prepare('DELETE FROM adult_sites WHERE id = ?').run(id);
+};
 
 // ─── Adult Registrations ──────────────────────────────────────────────────────
 

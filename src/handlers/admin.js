@@ -53,6 +53,7 @@ export const handleVerifApprove = async (ctx, bot) => {
   if (!user) return ctx.answerCbQuery('Пользователь не найден', { show_alert: true });
 
   db.setVerified(user.telegram_id, true);
+  clearSession(user.telegram_id); // сбрасываем FSM-состояние пользователя
   await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
   await ctx.answerCbQuery('✅ Верифицирован!');
 
@@ -85,6 +86,7 @@ export const handleVerifReject = async (ctx, bot) => {
   if (!user) return ctx.answerCbQuery('Пользователь не найден', { show_alert: true });
 
   db.setVerifRejected(userDbId);
+  clearSession(user.telegram_id); // сбрасываем FSM-состояние пользователя
   await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
   await ctx.answerCbQuery('❌ Отклонено');
 
