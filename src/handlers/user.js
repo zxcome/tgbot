@@ -341,16 +341,18 @@ export const handleSiteDone = async (ctx, bot) => {
 
   if (existing) {
     if (existing.status === 'rejected') {
-      // Повторная подача после отклонения
       db.resetRejectedRegistration(user.id, siteId);
-    } else if (existing.status === 'pending' || existing.status === 'approved') {
-      return ctx.answerCbQuery('Вы уже отправили заявку по этому сайту!', { show_alert: true });
+    } else if (existing.status === 'pending') {
+      return ctx.answerCbQuery('Заявка уже на проверке!', { show_alert: true });
+    } else if (existing.status === 'approved') {
+      return ctx.answerCbQuery('Заявка уже одобрена!', { show_alert: true });
     }
   } else {
     db.createRegistration(user.id, siteId);
   }
 
   const reg = db.getUserRegistration(user.id, siteId);
+  if (!reg) return ctx.answerCbQuery('Ошибка. Попробуйте ещё раз.', { show_alert: true });
 
   await ctx.editMessageText(
       `⏳ <b>Регистрация отправлена на проверку</b>\n\n` +
@@ -431,14 +433,18 @@ export const handleAdultDone = async (ctx, bot) => {
   if (existing) {
     if (existing.status === 'rejected') {
       db.resetRejectedAdultRegistration(user.id, siteId);
-    } else if (existing.status === 'pending' || existing.status === 'approved') {
-      return ctx.answerCbQuery('Вы уже отправили заявку по этому сайту!', { show_alert: true });
+    } else if (existing.status === 'pending') {
+      return ctx.answerCbQuery('Заявка уже на проверке!', { show_alert: true });
+    } else if (existing.status === 'approved') {
+      return ctx.answerCbQuery('Заявка уже одобрена!', { show_alert: true });
     }
   } else {
     db.createAdultRegistration(user.id, siteId);
   }
 
   const reg = db.getUserAdultRegistration(user.id, siteId);
+  // защита от двойного нажатия — если уже pending после reset, не отправляем повторно
+  if (!reg) return ctx.answerCbQuery('Ошибка. Попробуйте ещё раз.', { show_alert: true });
 
   await ctx.editMessageText(
       `⏳ <b>Заявка отправлена на проверку</b>\n\nСайт: <b>${site.name}</b>\n\nАдминистратор рассмотрит вашу заявку.`,
