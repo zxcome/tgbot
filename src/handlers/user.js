@@ -627,21 +627,20 @@ const handleBroadcastTextInput = async (ctx, bot) => {
 // ─── Admin adult site FSM ─────────────────────────────────────────────────────
 
 const handleAdminAdultSiteName = async (ctx) => {
-  updateSession(ctx.from.id, { state: 'admin_adult_site_url', name: ctx.message.text.trim() });
-  return ctx.reply('Введите URL сайта:');
+  const session = getSession(ctx.from.id);
+  const name = ctx.message.text.trim();
+
+  if (session.editingAdultSiteId) {
+    db.updateAdultSite(session.editingAdultSiteId, name, '');
+    clearSession(ctx.from.id);
+    return ctx.reply(`✅ Сайт <b>${name}</b> обновлён!`, { parse_mode: 'HTML', ...kbMainMenu() });
+  } else {
+    db.addAdultSite(name, '');
+    clearSession(ctx.from.id);
+    return ctx.reply(`✅ Адалт-сайт <b>${name}</b> добавлен!`, { parse_mode: 'HTML' });
+  }
 };
 
 const handleAdminAdultSiteUrl = async (ctx) => {
-  const session = getSession(ctx.from.id);
-  const url = ctx.message.text.trim();
-
-  if (session.editingAdultSiteId) {
-    db.updateAdultSite(session.editingAdultSiteId, session.name, url);
-    clearSession(ctx.from.id);
-    return ctx.reply(`✅ Сайт <b>${session.name}</b> обновлён!`, { parse_mode: 'HTML', ...kbMainMenu() });
-  } else {
-    db.addAdultSite(session.name, url);
-    clearSession(ctx.from.id);
-    return ctx.reply(`✅ Адалт-сайт <b>${session.name}</b> добавлен!`, { parse_mode: 'HTML' });
-  }
+  // не используется, оставлено для совместимости
 };
